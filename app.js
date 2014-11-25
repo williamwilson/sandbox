@@ -1,8 +1,12 @@
 var express = require('express');
 var app = express();
 
+app.set('views', __dirname + '/views');
+app.engine('html', require('ejs').renderFile);
+app.set('view engine', 'ejs');
+
 app.get('/', function (req, res) {
-   res.send('Hello world!'); 
+   res.render('index.ejs', { name: 'Shoopda' });
 });
 
 var server = app.listen(process.env.PORT, function() {
