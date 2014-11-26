@@ -4,6 +4,7 @@
   "description": "A NodeJS development sandbox",
   "main": "app.js",
   "dependencies": {
+    "bluebird": "^2.3.11",
     "ejs": "^1.0.0",
     "express": "^4.10.4",
     "fs-extra": "^0.12.0"
