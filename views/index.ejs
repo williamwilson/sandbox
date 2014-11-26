@@ -12,10 +12,20 @@
 <body id="home">
   <h1>HTML5 boilerplate</h1>
   <div>
-    <span>Hello world, I am the span, and my name is <%= name %></span>
+    <span>Hello world, I am the span, and my name is <%= sessionValue %></span>
+    <br/>
+    <span>Hello world, I am the knockout span, and my name is <span data-bind="text: sessionValue"></span></span>
   </div>
   <script type="text/javascript" src="js\vendor\jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="js\vendor\knockout-3.2.0.js"></script>
   <script type="text/javascript" src="js\app.js"></script>
   <script src="/socket.io/socket.io.js"></script>
+  
+  <script>
+    $(function() {
+      window.app = new App({ sessionValue: '<%= sessionValue %>' });
+      ko.applyBindings(app);
+    });
+  </script>
 </body>
 </html>
