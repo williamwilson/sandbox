@@ -10,8 +10,19 @@ app.set('view engine', 'ejs');
 app.use(express.cookieParser());
 app.use(express.session({secret: 'never tell aynone this deathly surprise'}));
 
+var knex = require('knex')({
+  client: 'mysql',
+  connection: {
+    host     : '127.0.0.1',
+    user     : 'joelhoward0',
+    database : 'sandbox'
+  }
+});
+
 app.get('/', function (req, res) {
-   res.render('index.ejs', { sessionValue: req.session.sessionValue });
+  knex.select('*').from('test').then(function(result) {
+    res.render('index.ejs', { sessionValue: req.session.sessionValue, results: result });
+  });
 });
 
 app.io.route('ready', function(req) {

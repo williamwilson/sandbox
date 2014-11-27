@@ -15,6 +15,14 @@
     <span>Hello world, I am the span, and my name is <%= sessionValue %></span>
     <br/>
     <span>Hello world, I am the knockout span, and my name is <span data-bind="text: sessionValue"></span></span>
+    <ol>
+      <% for(var i =0 ; i < results.length; i++) { %>
+       <li>
+         <span>id: <%= results[i].id %></span>
+         <br />
+         </span>data: <%= results[i].data %><span>
+      <% } %>
+    </ol>
   </div>
   <script type="text/javascript" src="js\vendor\jquery-1.11.1.min.js"></script>
   <script type="text/javascript" src="js\vendor\knockout-3.2.0.js"></script>
