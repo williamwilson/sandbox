@@ -23,6 +23,15 @@
          </span>data: <%= results[i].data %><span>
       <% } %>
     </ol>
+    
+    <form action="/login" method="post">
+      <label>Username:</label>
+      <input type="text" id="username" name="username"></input>
+      <label>Password:</label>
+      <input type="text" id="password" name="password"></input>
+      <input type="submit" value="Log In"></input>
+    </form>
+    
   </div>
   <script type="text/javascript" src="js\vendor\jquery-1.11.1.min.js"></script>
   <script type="text/javascript" src="js\vendor\knockout-3.2.0.js"></script>
