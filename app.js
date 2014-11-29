@@ -1,104 +1,68 @@
-var express = require('express.io'),
+var express = require('express'),
     app = express(),
+    socketio = require('socket.io'),
     util = require('./util/util.js'),
     passport = require('passport'),
-    Promise = require('bluebird'),
-    bodyParser = require('body-parser');
-    LocalStrategy = require('passport-local').Strategy;
-app.http().io();
+    bodyParser = require('body-parser'),
+    session = require('express-session'),
+    store = new session.MemoryStore(),
+    Users = require('./db/users.js'),
+    passportSocketIo = require('passport.socketio'),
+    cookieParser = require('cookie-parser'),
+    sessionSecret = 'never tell anyone this deathly surprise';
 
 app.use(express.static(__dirname + '/public/tmp'));
 app.set('views', __dirname + '/views');
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'ejs');
-app.use(express.cookieParser());
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(express.session({secret: 'never tell aynone this deathly surprise'}));
+app.use(session({store: store, secret: sessionSecret, resave: true, saveUninitialized: true}));
 app.use(passport.initialize());
-app.use(passport.session());
+app.use(passport.session({store: store, secret: sessionSecret}));
 
-passport.serializeUser(function(user, done) {
-  console.log('tryna serialize user');
-  console.log(user);
-  done(null, user.id);
+passport.serializeUser(Users.serialize);
+passport.deserializeUser(Users.deserialize);
+passport.use(require('./auth/local.js'));
+
+util.bundle();
+
+var server = require('http').createServer(app).listen(process.env.PORT, function() {
+  console.log('App running at http://%s:%s', server.address().address, server.address().port);
 });
-
-passport.deserializeUser(function(id, done) {
-  console.log('tryna deserialize user');
-  FindUser(id).then(function (user) {
-    console.log('done findin user');
-    console.log(user);
-    done(null, user);
-  });
-});
-
-passport.use(new LocalStrategy(
-  function(username, password, done) {
-    console.log('tryna authenticate');
-    FindUser(username).then(function(user) {
-      if (!user)
-        return done(null, false, { message: 'Incorrect username.' });
-      
-      if (!user.validPassword(password))
-        return done(null, false, { message: 'Incorrect password.' });
-        
-      return done(null, user);
-    });
-  })
-)
-
-var knex = require('knex')({
-  client: 'mysql',
-  connection: {
-    host     : '127.0.0.1',
-    user     : 'joelhoward0',
-    database : 'sandbox'
-  }
-});
-
-function FindUser(username) {
-  console.log('tryna find user');
-  return Promise.resolve({
-    id: 1,
-    username: 'Steven Jevenson',
-    validPassword: function(password) { return password == "password"; }
-  });
-}
+var sio = socketio.listen(server);
+sio.use(passportSocketIo.authorize({
+  cookieParser: cookieParser,
+  key: 'connect.sid',
+  secret: sessionSecret,
+  passport: passport,
+  store: store,
+  success: function(data, accept) { accept(); },
+  fail: function(data, message, error, accept) { accept(); }
+}));
 
 app.get('/', function (req, res) {
-  knex.select('*').from('test').then(function(result) {
-    res.render('index.ejs', { sessionValue: req.session.sessionValue, results: result });
-  });
+  res.render('index.ejs', { sessionValue: req.session.sessionValue, results: [] });
 });
 
 app.post('/login', passport.authenticate('local'), function(req, res) {
   console.log('authenticated successfully');
-  res.send('authetnicated successfully');
+  res.send('authenticated successfully');
 });
 
-app.get('/shoops', function(req, res) {
-  console.log(req.isAuthenticated());
-  res.send('isAuthenticated: ' + req.isAuthenticated());
+app.post('/logout', function(req, res) {
+  res.send('logged out');
 });
 
-app.io.route('ready', function(req) {
-  console.log('socket connected');
-});
+app.get('/check', function(req, res) { });
 
-app.io.route('save session value', function(req) {
-  console.log('saving session value:' + req.data);
-  req.session.sessionValue = req.data;
-  req.session.save(function() {
-    console.log('saved session');
-    req.io.emit('saved session value', req.data);
+sio.on('connection', function(socket) {
+  var user = socket.request.user;
+  console.log('connected user');
+  console.log(user);
+  
+  socket.on('check', function() {
+    console.log(user);
   });
-});
-
-util.bundle().then(function() { console.log('all done bundling'); });
-
-var server = app.listen(process.env.PORT, function() {
-  var host = server.address().address
-  var port = server.address().port
-  console.log('Example app listening at http://%s:%s', host, port);
 });

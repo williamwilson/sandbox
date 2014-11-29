@@ -3,7 +3,8 @@ create database sandbox;
 
 use sandbox;
 
-CREATE TABLE test (
+CREATE TABLE user (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  data VARCHAR(100)
+  username varchar(100) NOT NULL UNIQUE,
+  password_hash varchar(500) NULL
 );
