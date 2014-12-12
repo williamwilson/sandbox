@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>HTML5 boilerplate – all you really need…</title>
+  <link rel="stylesheet" href="css\app.css">
+  <!--[if IE]>
+  	<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <style type="text/css">
+
+  </style>
+</head>
+
+<body>
+  <script type="text/javascript" src="js\vendor\jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="js\vendor\knockout-3.2.0.js"></script>
+  <script type="text/javascript" src="js\vendor\jquery.form.min.js"></script>
+  <script type="text/javascript" src="js\vendor\d3.v3.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="js\vendor\sylvester.js" charset="utf-8"></script>
+  <script type="text/javascript" src="js\augment.js"></script>
+  <script type="text/javascript" src="js\unit.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  
+  <div id="screen" style="width: 100%; height: 100%">
+  </div>
+  
+  <script>
+    $(function() {
+      var io = window.io.connect('https://sandbox-joelhoward0.c9.io');
+      var width = $('#screen').width();
+      var height = $('#screen').height();
+      var mousePosition = { x: 0, y: 0 };
+      var mouseDown = false;
+      var spacebar = false;
+      var field = d3.select('#screen').append('svg');
+      
+      $(window).on('mousemove', function(e) {
+        mousePosition = { x: e.pageX, y: e.pageY };
+      })
+      $(window).on('mousedown', function(e) { mouseDown = true; });
+      $(window).on('mouseup', function(e) { mouseDown = false; });
+      $(window).on('keydown', function(e) { });
+      
+      $(window).on('keydown', function(e) {
+        if (e.keyCode == 32)
+          $(window).trigger('space', e);
+      });
+      
+      $(window).on('keyup', function(e) {
+        if (e.keyCode == 32)
+          $(window).trigger('spaceup', e);
+      });
+      
+      $(window).on('space', function() { spacebar = true; });
+      $(window).on('spaceup', function() { spacebar = false; });
+      
+      var Inputs = new window.Inputs({
+        mouse: function() {
+          return new Point(mousePosition.x, mousePosition.y);
+        },
+        click: function() {
+          return mouseDown;
+        },
+        spacebar: function() {
+          return spacebar;
+        }
+      });
+      var Map = new window.Map(width, height);
+      var Game = new window.Game(Map, Inputs);
+      
+      var player = Game.spawnPlayer();
+      window.setInterval(function(){
+        Game.tick();
+        updatePlayer();
+        updateLasers();
+        updateBugs();
+      }, 16);
+      
+      function updatePlayer() {
+        var playerSprite = field.selectAll('image.player').data([player]);
+        playerSprite.enter().append('image');
+        playerSprite
+          .attr('class', 'player')
+          .attr('xlink:href', 'images/babyjoel.png')
+          .attr('height', 25)
+          .attr('width', 25)
+          .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.rotateOffset.x, d.rotateOffset.y); });
+      }
+      
+      function buildTransformString(x, y, angle, rotateX, rotateY) {
+        return "translate( " + x + "," + y + ") rotate(" + angle + " " + rotateX + " " + rotateY + ")";
+      }
+      
+      function updateLasers() {
+        var laserSprites = field.selectAll('rect.laser').data(Game.lasers);
+        laserSprites.enter()
+          .append('rect');
+        
+        laserSprites
+          .attr('class', 'laser')
+          .attr('height', 2)
+          .attr('width', 12)
+          .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.rotateOffset.x, d.rotateOffset.y); });
+      }
+      
+      function updateBugs() {
+        var bugSprites = field.selectAll('image.bug').data(Game.units);
+        bugSprites.enter()
+          .append('image');
+        
+        bugSprites
+          .attr('class', 'bug')
+          .attr('xlink:href', 'images/bug.png')
+          .attr('height', 25)
+          .attr('width', 25)
+          .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.rotateOffset.x, d.rotateOffset.y); });
+      }
+      
+      // $(window).on('keypress', function(e) {
+      //   if (e.keyCode == 32)
+      //     $(window).trigger('space', e);
+      // });
+      
+      // $(window).on('mousemove', function(e) {
+      //   mousePosition = { x: e.pageX, y: e.pageY };
+      // })
+      
+      // $(window).on('space', function() { Game.spawnBug(); });
+      
+      // function getVector(p1, p2) {
+      //   var dx = p1.x - p2.x;
+      //   var dy = p1.y - p2.y;
+        
+      //   var distance = Math.sqrt((dx*dx) + (dy*dy));
+        
+      //   return { distance: distance, dx: dx / distance, dy: dy / distance };
+      // }
+      
+      // function tick() {
+      //   movePlayer();
+      //   moveLasers();
+      //   Game.moveUnits();
+      //   updateBugs();
+      // }
+      // window.setInterval(tick, 16);
+
+      // function fireLaser() {
+      //   var laser = { heading: { x: player.heading.x, y: player.heading.y }, position: { x: player.position.x, y: player.position.y } };
+      //   lasers.push(laser);
+      // }
+      
+      // function positionOutsideScreen(x, y) {
+      //   return x > width || x < 0 || y > height || y < 0;
+      // }
+      
+      // function updateBugs() {
+      //   var bugSprites = field.selectAll('image.bug').data(Game.units);
+      //   bugSprites.enter()
+      //     .append('image');
+        
+      //   bugSprites
+      //     .attr('class', 'bug')
+      //     .attr('xlink:href', 'images/bug.png')
+      //     .attr('height', 25)
+      //     .attr('width', 25)
+      //     .attr('transform', function(d) { return buildTransformString(d.position.x + 6, d.position.y + 1, -180 + getAngle(d.heading.x, d.heading.y)) });
+      // }
+      
+      // function moveLasers() {
+      //   var laserSpeed = 12;
+        
+      //   for(var i = 0; i < lasers.length; i++) {
+      //     lasers[i].position.x -= lasers[i].heading.x * laserSpeed;
+      //     lasers[i].position.y -= lasers[i].heading.y * laserSpeed;
+      //   }
+        
+      //   updateLasers();
+      // }
+      
+      // function movePlayer() {
+      //   if (!mousePosition)
+      //     return;
+          
+      //   var toMouse = getVector(player.position, mousePosition);
+        
+      //   var vx = d3.min([toMouse.distance / 10, 10]) * toMouse.dx;
+      //   var vy = d3.min([toMouse.distance / 10, 10]) * toMouse.dy;
+        
+      //   player.position.x -= vx;
+      //   player.position.y -= vy;
+      //   player.heading.x = toMouse.dx;
+      //   player.heading.y = toMouse.dy;
+        
+      //   updatePlayer();
+      // }
+      
+      // function toDegrees(radians) {
+      //   return radians * (180/Math.PI);
+      // }
+      
+      // function getAngle(headingX, headingY) {
+      //   var hyp = Math.sqrt((headingX*headingX) + (headingY*headingY));
+      //   var angle = toDegrees(Math.asin(headingY / hyp));
+        
+      //   if (headingX < 0)
+      //     angle = angle*-1;
+      //   return angle;
+      // }
+      
+      // function buildTransformString(x, y, angle) {
+      //   return "translate( " + x + "," + y + ") rotate(" + angle + ")";
+      // }
+      
+      // updatePlayer();
+
+      // field.on('click', fireLaser);
+    });
+  </script>
+</body>
+</html>

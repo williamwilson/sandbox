@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>HTML5 boilerplate – all you really need…</title>
+  <link rel="stylesheet" href="css\app.css">
+  <!--[if IE]>
+  	<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <style type="text/css">
+    div.bar {
+      display: inline-block;
+      width: 20px;
+      height: 75px;   /* We'll override height later */
+      background-color: teal;
+      margin-right: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <script type="text/javascript" src="js\vendor\jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="js\vendor\knockout-3.2.0.js"></script>
+  <script type="text/javascript" src="js\vendor\jquery.form.min.js"></script>
+  <script type="text/javascript" src="js\vendor\d3.v3.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="js\vendor\sylvester.js" charset="utf-8"></script>
+  <script type="text/javascript" src="js\graph.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  
+  <script>
+    $(function() {
+      var minWidth = 900, minHeight = 500;
+      var width = 900; height = 500;
+      var viewMode = 'map';
+      var viewingNode = ko.observable();
+      var newNode = ko.observable();
+      var links = ko.observableArray([]);
+      
+      var nodes = ko.observableArray([ 
+        { id: 1, name: 'Heya', links: [] },
+      ]);
+      
+      var svg = d3.select('body').append('svg');
+      
+      $(window).resize(getViewportSize);
+      $(window).on('keyup', function(e) {
+        if (e.keyCode == 27)
+          $(window).trigger('escape', e);
+        if (e.keyCode == 113)
+          $(window).trigger('f2', e);
+      });
+      $(window).on('escape', function(e) {
+        viewMap();
+      });
+      $(window).on('f2', function(e) {
+        
+      });
+      
+      var force = d3.layout.force()
+        .nodes(nodes())
+        .links(links())
+        .size([width, height])
+        .charge(-400)
+        .linkDistance(40)
+        .on("tick", tick)
+        .start();
+      
+      function tick() {
+        svg.selectAll('line')
+          .attr("x1", function(d) { return d.source.x; })
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; });
+      
+        svg.selectAll('circle')
+          .attr("cx", function(d) { return d.x; })
+          .attr("cy", function(d) { return d.y; });
+      }
+      
+      function restart() {
+        svg
+          .selectAll('line')
+          .data(links())
+          .enter()
+          .insert("line", ".node")
+          .attr("class", "link");
+      
+        force.start();
+      }
+      
+      function getViewportSize() {
+        width = d3.max([minWidth, $(window).width()]);
+        height = d3.max([minHeight, $(window).height()]);
+        force.size([width, height]);
+      }
+      
+      function viewMap() {
+        viewMode = 'map';
+        viewingNode(null);
+        
+        svg.selectAll('text').remove();
+        svg.on('click', null);
+        
+        var circles = svg.selectAll('circle').data(nodes(), function(node) { return node.id ;});
+        circles.enter().append('circle');
+        circles
+          .on("click", viewNodeDetails)
+          .transition()
+          .duration(400)
+          .attr('r', 5)
+          .attr('fill', 'black')
+          .attr('stroke', 'black');
+          
+        removeNewNodes();
+        restart();
+      }
+      
+      function removeNewNodes() {
+        newNode(false);
+        
+        svg
+          .selectAll('circle.new')
+          .attr('class', null)
+          .transition()
+          .attr('r', 0)
+          .remove();
+        
+        svg
+          .selectAll('path.newNode')
+          .remove();
+          
+        svg
+          .selectAll('.newName')
+          .remove();
+          
+        svg
+          .selectAll('.marker')
+          .remove();
+      }
+      
+      function calculateLine(d) {
+        // Total difference in x and y from source to target
+        dX = d.target.x - d.source.x;
+        dY = d.target.y - d.source.y;
+
+        // Length of path from center of source node to center of target node
+        pathLength = Math.sqrt((dX * dX) + (dY * dY));
+
+        // x and y distances from center to outside edge of target node
+        offsetX = (dX * d.target.radius) / pathLength;
+        offsetY = (dY * d.target.radius) / pathLength;
+
+        return "M" + d.source.x + "," + d.source.y + "L" + (d.target.x - offsetX) + "," + (d.target.y - offsetY);
+      }
+      
+      function createNewNode(location) {
+        var x = location[0];
+        var y = location[1];
+        
+        newNode({ id: nodes().length + 1, x: x, y: y });
+        
+        var node = svg
+          .selectAll('circle.new')
+          .data([newNode()])
+          .enter()
+          .append('circle')
+          .attr('class', 'new')
+          .attr('fill', 'green')
+          .attr('stroke', 'blue')
+          .attr('cx', x)
+          .attr('cy', y)
+          .attr('r', 0);
+          
+        node
+          .transition()
+          .attr('r', 15);
+          
+          var link = {
+            source: nodes()[0],
+            target: newNode()
+          };
+          
+          var curve = svg
+            .selectAll('path.newNode')
+            .data([link])
+            .enter()
+            .insert('path', ':first-child')
+            .attr('class', 'newNode')
+            .attr('fill', 'none')
+            .attr('stroke', 'green')
+            .attr("d", calculateLine);
+            
+          var length = curve.node().getTotalLength();
+          curve
+            .attr("stroke-dasharray", length + " " + length)
+            .attr("stroke-dashoffset", length)
+            .transition()
+            .duration(400)
+            .attr("stroke-dashoffset", 0);
+            
+          var foreignObject = svg
+            .selectAll('foreignObject.newName')
+            .data([newNode()])
+            .enter()
+            .append('foreignObject')
+            .attr('class', 'newName')
+            .attr('x', x - 80)
+            .attr('y', y + 20)
+            .attr('width', 200)
+            .attr('height', 45);
+            
+          var body = foreignObject
+            .selectAll('body')
+            .data([newNode()])
+            .enter()
+            .append('xhtml:body')
+            .attr('xmlns','http://www.w3.org/1999/xhtml');
+            
+          var stuff = body
+            .selectAll('input').data([newNode()]).enter();
+            
+            stuff
+            .append('label')
+            .text('Name:');
+            
+          var text = stuff
+            .append('input')
+            .attr('type', 'text');
+          
+          $(text[0]).focus();
+          
+          text.on('keyup', function() {
+            if (d3.event.keyCode != 13)
+              return true;
+            
+            node.attr('class', 'null');
+            
+            newNode().name = $(this).val();
+            saveNewNode(newNode());
+          });
+      }
+      
+      function saveNewNode(node) {
+        links.push({from: viewingNode(), to: node});
+        nodes.push(node);
+        viewMap();
+      }
+      
+      function createConnection() {
+        removeNewNodes();
+        createNewNode(d3.mouse(this));
+      }
+      
+      function viewNodeDetails(node) {
+        force.stop();
+        
+        d3.event.stopPropagation();
+        viewMode = 'details';
+        viewingNode(node);
+        var circles = svg.selectAll('circle').data(nodes(), function(node) { return node.id; })
+        circles.enter().append('circle');
+        
+        viewingCircle = circles.filter(function(d) {
+          return d == viewingNode();
+        });
+        
+        svg.on('click', createConnection);
+        
+        var t1 = viewingCircle.transition().duration(400);
+        t1.attr('r', function(d) { return width / 8; })
+          .attr('fill', 'white')
+          .attr('stroke', 'black');
+        
+        var t2 = t1.transition().each(function() {
+          svg
+            .selectAll('text.name')
+            .data([viewingNode()])
+            .enter()
+            .append('text')
+            .attr("class", "name")
+            .attr("x", function(d) { return width / 2; })
+            .attr("y", function(d) { return height / 2; })
+            .attr("text-anchor", "middle")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", "20px")
+            .attr("fill", "red")
+            .attr("fill-opacity", 0)
+            .text(function(d) { return d.name; })
+            .transition().duration(200)
+            .attr("fill-opacity", 1)
+        });
+      }
+      
+      getViewportSize();
+      viewMap();
+    });
+  </script>
+</body>
+</html>
