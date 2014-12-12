@@ -8,7 +8,7 @@ var express = require('express'),
     store = new session.MemoryStore(),
     Users = require('./db/users.js'),
     passportSocketIo = require('passport.socketio'),
-    cookieParser = require('cookie-parser'),
+    cookieParser = require('cookie-parser'), 
     sessionSecret = 'never tell anyone this deathly surprise';
 
 app.use(express.static(__dirname + '/public/tmp'));
@@ -46,6 +46,14 @@ app.get('/', function (req, res) {
   res.render('index.ejs', { sessionValue: req.session.sessionValue, results: [] });
 });
 
+app.get('/d3', function(req, res) {
+  res.render('d3.ejs');
+});
+
+app.get('/pb-shooter', function(req, res) {
+  res.render('pb-shooter.ejs');
+});
+
 app.post('/login', passport.authenticate('local'), function(req, res) {
   console.log('authenticated successfully');
   res.send('authenticated successfully');
@@ -59,8 +67,6 @@ app.get('/check', function(req, res) { });
 
 sio.on('connection', function(socket) {
   var user = socket.request.user;
-  console.log('connected user');
-  console.log(user);
   
   socket.on('check', function() {
     console.log(user);

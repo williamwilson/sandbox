@@ -27,5 +27,16 @@
     $('form').ajaxForm(function(result) {
       self.reconnect();
     });
+    
+    self.graph = new myGraph("#graph");
+    self.graph.addNode("Cause");
+    
+  // // You can do this from the console as much as you like...
+  // graph.addNode("Cause");
+  // graph.addNode("Effect");
+  // graph.addLink("Cause", "Effect");
+  // graph.addNode("A");
+  // graph.addNode("B");
+  // graph.addLink("A", "B");
   }
 })();

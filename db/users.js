@@ -22,6 +22,13 @@ function deserialize(id, done) {
 };
 exports.deserialize = deserialize;
 
+function fromNode(result) {
+  return {
+    username: result._data.data.username
+  };
+};
+exports.fromNode = fromNode;
+
 function inflateUser(user) {
   if (typeof user !== 'object')
     return null;

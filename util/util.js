@@ -3,7 +3,10 @@ var Promise = require('bluebird'),
 
 var files = [
   'js/app.js',
+  'js/augment.js',
+  'js/unit.js',
   'js/vendor',
+  'images',
   'css/app.css'
 ];
 
