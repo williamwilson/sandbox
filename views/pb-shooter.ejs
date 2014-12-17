@@ -17,7 +17,7 @@
   <script type="text/javascript" src="js\vendor\knockout-3.2.0.js"></script>
   <script type="text/javascript" src="js\vendor\jquery.form.min.js"></script>
   <script type="text/javascript" src="js\vendor\d3.v3.min.js" charset="utf-8"></script>
-  <script type="text/javascript" src="js\vendor\sylvester.js" charset="utf-8"></script>
+  <script type="text/javascript" src="js\vendor\SAT.min.js"></script>
   <script type="text/javascript" src="js\augment.js"></script>
   <script type="text/javascript" src="js\unit.js"></script>
   <script src="/socket.io/socket.io.js"></script>
@@ -40,7 +40,6 @@
       })
       $(window).on('mousedown', function(e) { mouseDown = true; });
       $(window).on('mouseup', function(e) { mouseDown = false; });
-      $(window).on('keydown', function(e) { });
       
       $(window).on('keydown', function(e) {
         if (e.keyCode == 32)
@@ -75,6 +74,7 @@
         updatePlayer();
         updateLasers();
         updateBugs();
+        Game.checkCollisions();
       }, 16);
       
       function updatePlayer() {
@@ -105,7 +105,7 @@
       }
       
       function updateBugs() {
-        var bugSprites = field.selectAll('image.bug').data(Game.units);
+        var bugSprites = field.selectAll('image.bug').data(Game.bugs);
         bugSprites.enter()
           .append('image');
         
@@ -115,106 +115,52 @@
           .attr('height', 25)
           .attr('width', 25)
           .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.rotateOffset.x, d.rotateOffset.y); });
-      }
-      
-      // $(window).on('keypress', function(e) {
-      //   if (e.keyCode == 32)
-      //     $(window).trigger('space', e);
-      // });
-      
-      // $(window).on('mousemove', function(e) {
-      //   mousePosition = { x: e.pageX, y: e.pageY };
-      // })
-      
-      // $(window).on('space', function() { Game.spawnBug(); });
-      
-      // function getVector(p1, p2) {
-      //   var dx = p1.x - p2.x;
-      //   var dy = p1.y - p2.y;
-        
-      //   var distance = Math.sqrt((dx*dx) + (dy*dy));
-        
-      //   return { distance: distance, dx: dx / distance, dy: dy / distance };
-      // }
-      
-      // function tick() {
-      //   movePlayer();
-      //   moveLasers();
-      //   Game.moveUnits();
-      //   updateBugs();
-      // }
-      // window.setInterval(tick, 16);
-
-      // function fireLaser() {
-      //   var laser = { heading: { x: player.heading.x, y: player.heading.y }, position: { x: player.position.x, y: player.position.y } };
-      //   lasers.push(laser);
-      // }
-      
-      // function positionOutsideScreen(x, y) {
-      //   return x > width || x < 0 || y > height || y < 0;
-      // }
-      
-      // function updateBugs() {
-      //   var bugSprites = field.selectAll('image.bug').data(Game.units);
-      //   bugSprites.enter()
-      //     .append('image');
-        
-      //   bugSprites
-      //     .attr('class', 'bug')
-      //     .attr('xlink:href', 'images/bug.png')
-      //     .attr('height', 25)
-      //     .attr('width', 25)
-      //     .attr('transform', function(d) { return buildTransformString(d.position.x + 6, d.position.y + 1, -180 + getAngle(d.heading.x, d.heading.y)) });
-      // }
-      
-      // function moveLasers() {
-      //   var laserSpeed = 12;
-        
-      //   for(var i = 0; i < lasers.length; i++) {
-      //     lasers[i].position.x -= lasers[i].heading.x * laserSpeed;
-      //     lasers[i].position.y -= lasers[i].heading.y * laserSpeed;
-      //   }
-        
-      //   updateLasers();
-      // }
-      
-      // function movePlayer() {
-      //   if (!mousePosition)
-      //     return;
           
-      //   var toMouse = getVector(player.position, mousePosition);
+        var hitBoxes = [];
+        for(var i = 0; i < Game.bugs.length; i++) {
+          hitBoxes.push(Game.bugs[i].hitBox());
+        }
+        var bugHitBoxes = field.selectAll('circle.hitBox').data(hitBoxes);
+        bugHitBoxes.enter().append('circle');
         
-      //   var vx = d3.min([toMouse.distance / 10, 10]) * toMouse.dx;
-      //   var vy = d3.min([toMouse.distance / 10, 10]) * toMouse.dy;
+        bugHitBoxes
+          .attr('class', 'hitBox')
+          .attr('cx', function(d) { return d.pos.x; })
+          .attr('cy', function(d) { return d.pos.y; })
+          .attr('r', function(d) { return d.r })
+          .attr('fill', 'none')
+          .attr('stroke', 'black');
+          
+        var hitBoxLines = [];
+        for(var i = 0; i < Game.lasers.length; i++) {
+          var box = Game.lasers[i].hitBox();
+          for(var j = 0; j < box.calcPoints.length-1; j++) {
+            hitBoxLines.push({
+              x1: box.pos.x + box.calcPoints[j].x,
+              y1: box.pos.y + box.calcPoints[j].y,
+              x2: box.pos.x + box.calcPoints[j+1].x,
+              y2: box.pos.y + box.calcPoints[j+1].y
+            });
+          }
+          hitBoxLines.push({
+            x1: box.pos.x + box.calcPoints[j].x,
+            y1: box.pos.y + box.calcPoints[j].y,
+            x2: box.pos.x + box.calcPoints[0].x,
+            y2: box.pos.y + box.calcPoints[0].y
+          });
+        }
         
-      //   player.position.x -= vx;
-      //   player.position.y -= vy;
-      //   player.heading.x = toMouse.dx;
-      //   player.heading.y = toMouse.dy;
+        var laserHitBoxes = field.selectAll('line.hitBox').data(hitBoxLines);
+        laserHitBoxes.enter().append('line');
         
-      //   updatePlayer();
-      // }
-      
-      // function toDegrees(radians) {
-      //   return radians * (180/Math.PI);
-      // }
-      
-      // function getAngle(headingX, headingY) {
-      //   var hyp = Math.sqrt((headingX*headingX) + (headingY*headingY));
-      //   var angle = toDegrees(Math.asin(headingY / hyp));
-        
-      //   if (headingX < 0)
-      //     angle = angle*-1;
-      //   return angle;
-      // }
-      
-      // function buildTransformString(x, y, angle) {
-      //   return "translate( " + x + "," + y + ") rotate(" + angle + ")";
-      // }
-      
-      // updatePlayer();
-
-      // field.on('click', fireLaser);
+        laserHitBoxes
+          .attr('class', 'hitBox')
+          .attr('x1', function(d) { return d.x1; })
+          .attr('y1', function(d) { return d.y1; })
+          .attr('x2', function(d) { return d.x2; })
+          .attr('y2', function(d) { return d.y2; })
+          .attr('style', "stroke:rgb(255,0,0);stroke-width:1");
+      }
     });
   </script>
 </body>

@@ -75,9 +75,12 @@
   window.Bug = augment(Unit, function (base) {
     this.constructor = function(position, vector) {
       base.constructor.call(this, position, vector);
-      this.speed = 4;
+      this.speed = 2;
       this.drawOffset = { x: 12.5, y: 12.5 };
       this.rotateOffset = { x: 12.5, y: 12.5 };
+    };
+    this.hitBox = function() {
+      return new SAT.Circle(new SAT.Vector(this.position.x+1, this.position.y+1.5), 7);
     };
   });
   
@@ -105,9 +108,20 @@
     this.constructor = function(position, vector) {
       base.constructor.call(this, position, vector);
       this.speed = 10;
-      this.drawOffset = { x: 12.5, y: 2.5 };
-      this.rotateOffset = { x: 16, y: 5 };
+      this.drawOffset = { x: 6, y: 1 };
+      this.rotateOffset = { x: 6, y: 1 };
     };
+    this.hitBox = function() {
+      var polygon = new SAT.Polygon(
+        new SAT.Vector(this.position.x, this.position.y),
+        [new SAT.Vector(6, 1),
+        new SAT.Vector(6, -1),
+        new SAT.Vector(-6, -1),
+        new SAT.Vector(-6, 1)]
+      );
+      polygon.rotate(this.angle * (Math.PI / 180));
+      return polygon;
+    }
   });
   
   window.Inputs = augment(Object, function() {
@@ -136,7 +150,7 @@
       
       this.getInputs = getInputs;
       this.map = map;
-      this.units = [];
+      this.bugs = [];
       this.lasers = [];
       this.laserCooldown = false;
     };
@@ -159,18 +173,22 @@
       }, 500);
     };
     this.spawnBug = function() {
+      var self = this;
+      self.bugCooldown = true;
+      
       var target = this.map.getRandomPoint();
       var center = this.map.center();
       var vector = new Vector(center, target);
     
+      setTimeout(function() {
+        self.bugCooldown = false;
+      }, 750);
+    
       var bug = new Bug(center, vector);
-      this.units.push(bug);
+      this.bugs.push(bug);
     };
     this.spawnPlayer = function() {
       var target = this.getInputs.mouse();
-      if (typeof target != "object" || !(target instanceof Point))
-        throw new Error("getInputs.mouse() was not a point, it was: " + target);
-      
       var center = this.map.center();
       var vector = new Vector(center, target);
       
@@ -180,8 +198,8 @@
     this.moveUnits = function() {
       this.player.move(this.getInputs.mouse());
       
-      for(var i = 0; i < this.units.length; i++) {
-        this.units[i].move();
+      for(var i = 0; i < this.bugs.length; i++) {
+        this.bugs[i].move();
       }
       
       for(var i = 0; i < this.lasers.length; i++) {
@@ -196,10 +214,30 @@
       }
       
       if (this.getInputs.spacebar()) {
-        this.spawnBug();
+        if (!this.bugCooldown) {
+          this.spawnBug();
+        }
       }
       
+      var center = this.map.center();
+      var target = this.getInputs.mouse();
+      var vector = new Vector(center, target);
+      this.pointerLaser = new Laser(center, vector);
       this.moveUnits();
+    }
+    this.checkCollisions = function() {
+      for(var i = 0; i < this.lasers.length; i++) {
+        var laserPolygon = this.lasers[i].hitBox();
+        for(var j = 0; j < this.bugs.length; j++) {
+          var bugPolygon = this.bugs[j].hitBox();
+          var response = new SAT.Response();
+          var collided = SAT.testPolygonCircle(laserPolygon, bugPolygon, response);
+          if (collided) {
+            console.log('laser ' + i + ' hit bug ' + j + '!');
+            debugger;
+          }
+        }
+      }
     }
   });
 })(window);
