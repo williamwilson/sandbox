@@ -37,15 +37,21 @@
       var inputs = new window.Inputs(new window.ClientInputs());
       var Map = new window.Map(width, height);
       var Game = new window.Game(Map, inputs);
+      var playerDead = false;
       
       var player = Game.spawnPlayer();
       window.setInterval(function(){
+        if (playerDead)
+          return;
+          
+        playerDead = Game.player.dead;
+          
         var gameState = Game.tick();
-        updatePlayer();
         updateLasers();
         updateBugs();
         updateExplosions();
         Game.checkCollisions();
+        updatePlayer();
       }, 16);
       
       function buildTransformString(x, y, angle, rotateX, rotateY) {
@@ -62,17 +68,22 @@
           .attr('width', 25)
           .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.drawOffset.x, d.drawOffset.y); });
         
-        var playerHitBox = drawHitBox(player);
-        var playerHitBoxSprite = field.selectAll('line.playerHitBox').data(playerHitBox);
-        playerHitBoxSprite.enter().append('line');
+        // var playerHitBox = drawHitBox(player);
+        // var playerHitBoxSprite = field.selectAll('line.playerHitBox').data(playerHitBox);
+        // playerHitBoxSprite.enter().append('line');
         
-        playerHitBoxSprite
-          .attr('class', 'playerHitBox')
-          .attr('x1', function(d) { return d.x1; })
-          .attr('y1', function(d) { return d.y1; })
-          .attr('x2', function(d) { return d.x2; })
-          .attr('y2', function(d) { return d.y2; })
-          .attr('style', "stroke:rgb(255,0,0);stroke-width:1");
+        // playerHitBoxSprite
+        //   .attr('class', 'playerHitBox')
+        //   .attr('x1', function(d) { return d.x1; })
+        //   .attr('y1', function(d) { return d.y1; })
+        //   .attr('x2', function(d) { return d.x2; })
+        //   .attr('y2', function(d) { return d.y2; })
+        //   .attr('style', "stroke:rgb(255,0,0);stroke-width:1");
+        
+        if (playerDead) {
+          field.selectAll('image.player').remove();
+          alert('u ded');
+        }
       }
       
       function updateLasers() {

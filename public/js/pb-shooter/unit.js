@@ -110,6 +110,7 @@
         throw new Error("map was not a Map, it was: " + map);
       if (typeof getInputs != "object")
         throw new Error("map was not a Map, it was: " + map);
+      var self = this;
       
       this.getInputs = getInputs;
       this.map = map;
@@ -117,6 +118,12 @@
       this.lasers = [];
       this.explosions = [];
       this.laserCooldown = false;
+      this.bugCooldown = true;
+      this.bugDelay = 1000;
+      
+      setTimeout(function() {
+        self.bugCooldown = false;
+      }, 3000);
     };
     this.spawnLaser = function(origin, target) {
       if (typeof origin != "object" || !(origin instanceof Point))
@@ -149,8 +156,9 @@
       var vector = new Vector(center, target);
     
       setTimeout(function() {
+        this.bugDelay = this.bugDelay - 10;
         self.bugCooldown = false;
-      }, 750);
+      }, this.bugDelay);
     
       var bug = new Bug(center, vector);
       this.bugs.push(bug);
@@ -182,8 +190,8 @@
       var mouse = this.getInputs.mouse();
       if (this.getInputs.click())
         this.spawnLaser(this.player.position, mouse);
-      if (this.getInputs.spacebar())
-        this.spawnBug();
+      
+      this.spawnBug();
       
       var center = this.map.center();
       var vector = new Vector(center, mouse);
@@ -227,10 +235,11 @@
       
       for(var i = 0; i < this.bugs.length; i++) {
         var bug = this.bugs[i];
-        console.log(collision.response);
+        var collision = this.checkCollision(this.player, bug);
         if (collision.collided) {
           this.bugs.splice(i, 1); i--;
           this.explosions.push(new Explosion(bug.position, bug.vector))
+          this.player.dead = true;
         }
       }
     }
