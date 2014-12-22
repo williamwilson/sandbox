@@ -36,10 +36,10 @@
     this.rectangleHitBox = function() {
       var polygon = new SAT.Polygon(
         new SAT.Vector(this.position.x, this.position.y), [
-        new SAT.Vector(this.drawOffset.x, this.drawOffset.y),
-        new SAT.Vector(this.drawOffset.x, -this.drawOffset.y),
+        new SAT.Vector(-this.drawOffset.x, this.drawOffset.y),
         new SAT.Vector(-this.drawOffset.x, -this.drawOffset.y),
-        new SAT.Vector(-this.drawOffset.x, this.drawOffset.y)]
+        new SAT.Vector(this.drawOffset.x, -this.drawOffset.y),
+        new SAT.Vector(this.drawOffset.x, this.drawOffset.y)]
       );
       polygon.rotate(this.angle * (Math.PI / 180));
       return polygon;
@@ -192,10 +192,7 @@
       
       for(var i = 0; i < this.explosions.length; i++) {
         if (this.explosions[i].lifespan < 1)
-        {
-          console.log('explosion faded');
           this.explosions.splice(i, 1);
-        }
       }
     }
     this.checkCollision = function(unit1, unit2) {
@@ -207,6 +204,13 @@
       };
     };
     this.checkCollisions = function() {
+      for (var i = 0; i < this.lasers.length; i++) {
+        var laser = this.lasers[i];
+        if (this.map.pointOffMap(laser.position)) {
+          this.lasers.splice(i, 1); i--;
+        }
+      }
+      
       for(var i = 0; i < this.lasers.length; i++) {
         for(var j = 0; j < this.bugs.length; j++) {
           var laser = this.lasers[i];
@@ -214,11 +218,19 @@
           
           var collision = this.checkCollision(laser, bug); 
           if (collision.collided) {
-            console.log('collision between laser ' + i + ' and bug ' + j);
-            this.lasers.splice(i, 1);
-            this.bugs.splice(j, 1);
+            this.lasers.splice(i, 1); i--;
+            this.bugs.splice(j, 1); j--;
             this.explosions.push(new Explosion(bug.position, bug.vector));
           }
+        }
+      }
+      
+      for(var i = 0; i < this.bugs.length; i++) {
+        var bug = this.bugs[i];
+        console.log(collision.response);
+        if (collision.collided) {
+          this.bugs.splice(i, 1); i--;
+          this.explosions.push(new Explosion(bug.position, bug.vector))
         }
       }
     }

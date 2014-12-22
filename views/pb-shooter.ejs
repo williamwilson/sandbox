@@ -48,6 +48,10 @@
         Game.checkCollisions();
       }, 16);
       
+      function buildTransformString(x, y, angle, rotateX, rotateY) {
+        return "translate( " + x + "," + y + ") rotate(" + angle + " " + rotateX + " " + rotateY + ")";
+      }
+      
       function updatePlayer() {
         var playerSprite = field.selectAll('image.player').data([player]);
         playerSprite.enter().append('image');
@@ -57,10 +61,18 @@
           .attr('height', 25)
           .attr('width', 25)
           .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.drawOffset.x, d.drawOffset.y); });
-      }
-      
-      function buildTransformString(x, y, angle, rotateX, rotateY) {
-        return "translate( " + x + "," + y + ") rotate(" + angle + " " + rotateX + " " + rotateY + ")";
+        
+        var playerHitBox = drawHitBox(player);
+        var playerHitBoxSprite = field.selectAll('line.playerHitBox').data(playerHitBox);
+        playerHitBoxSprite.enter().append('line');
+        
+        playerHitBoxSprite
+          .attr('class', 'playerHitBox')
+          .attr('x1', function(d) { return d.x1; })
+          .attr('y1', function(d) { return d.y1; })
+          .attr('x2', function(d) { return d.x2; })
+          .attr('y2', function(d) { return d.y2; })
+          .attr('style', "stroke:rgb(255,0,0);stroke-width:1");
       }
       
       function updateLasers() {
@@ -103,6 +115,43 @@
           .attr('height', 25)
           .attr('width', 25)
           .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.drawOffset.x, d.drawOffset.y); });
+          
+        var bugHitBoxes = [];
+        for (var i = 0; i < Game.bugs.length; i++) {
+          bugHitBoxes.push(Game.bugs[i].hitBox());
+        }
+        field.selectAll('circle.bugHitBox').remove();
+        var bugHitBoxSprites = field.selectAll('circle.bugHitBox').data(bugHitBoxes);
+        bugHitBoxSprites.enter().append('circle');
+        
+        bugHitBoxSprites
+          .attr('class', 'bugHitBox')
+          .attr('cx', function(d) { return d.pos.x; })
+          .attr('cy', function(d) { return d.pos.y; })
+          .attr('r', function(d) { return d.r; })
+          .attr('fill', 'none')
+          .attr('stroke', 'red');
+      }
+      
+      function drawHitBox(unit) {
+        var box = unit.hitBox();
+        var hitBoxLines = [];
+        for(var j = 0; j < box.calcPoints.length-1; j++) {
+          hitBoxLines.push({
+            x1: box.pos.x + box.calcPoints[j].x,
+            y1: box.pos.y + box.calcPoints[j].y,
+            x2: box.pos.x + box.calcPoints[j+1].x,
+            y2: box.pos.y + box.calcPoints[j+1].y
+          });
+        }
+        hitBoxLines.push({
+          x1: box.pos.x + box.calcPoints[j].x,
+          y1: box.pos.y + box.calcPoints[j].y,
+          x2: box.pos.x + box.calcPoints[0].x,
+          y2: box.pos.y + box.calcPoints[0].y
+        });
+        
+        return hitBoxLines;
       }
     });
   </script>
@@ -124,32 +173,8 @@
 <!--  .attr('fill', 'none')-->
 <!--  .attr('stroke', 'black');-->
   
-<!--var hitBoxLines = [];-->
-<!--for(var i = 0; i < Game.lasers.length; i++) {-->
-<!--  var box = Game.lasers[i].hitBox();-->
-<!--  for(var j = 0; j < box.calcPoints.length-1; j++) {-->
-<!--    hitBoxLines.push({-->
-<!--      x1: box.pos.x + box.calcPoints[j].x,-->
-<!--      y1: box.pos.y + box.calcPoints[j].y,-->
-<!--      x2: box.pos.x + box.calcPoints[j+1].x,-->
-<!--      y2: box.pos.y + box.calcPoints[j+1].y-->
-<!--    });-->
-<!--  }-->
-<!--  hitBoxLines.push({-->
-<!--    x1: box.pos.x + box.calcPoints[j].x,-->
-<!--    y1: box.pos.y + box.calcPoints[j].y,-->
-<!--    x2: box.pos.x + box.calcPoints[0].x,-->
-<!--    y2: box.pos.y + box.calcPoints[0].y-->
-<!--  });-->
-<!--}-->
-
 <!--var laserHitBoxes = field.selectAll('line.hitBox').data(hitBoxLines);-->
 <!--laserHitBoxes.enter().append('line');-->
 
 <!--laserHitBoxes-->
 <!--  .attr('class', 'hitBox')-->
-<!--  .attr('x1', function(d) { return d.x1; })-->
-<!--  .attr('y1', function(d) { return d.y1; })-->
-<!--  .attr('x2', function(d) { return d.x2; })-->
-<!--  .attr('y2', function(d) { return d.y2; })-->
-<!--  .attr('style', "stroke:rgb(255,0,0);stroke-width:1");-->

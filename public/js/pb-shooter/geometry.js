@@ -29,6 +29,15 @@
     this.center = function() {
       return new Point(this.width/2, this.height/2);
     };
+    this.pointOffMap = function(point) {
+      if (typeof point != "object" || !(point instanceof Point))
+        throw new Error("point was not a point, it was: " + point);
+      
+      if (point.x < -10 || point.x > this.width + 10)
+        return true;
+      if (point.y < -10 || point.y > this.height + 10)
+        return true;
+    };
   });
   
   window.Vector = augment(Object, function () {

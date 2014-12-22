@@ -1,31 +1,45 @@
-var neo4j = require('./neo4j/neo4j.js'),
-    Promise =require('bluebird'),
-    Users = require('./db/users.js');
+var SAT = require('sat');
 
-neo4j.deleteAll().then(function() {
-  return Promise.props({
-    top: neo4j.saveNode({name: 'Full Guard (Top)'}),
-    bottom: neo4j.saveNode({name: 'Full Guard (Bottom)'})
-  });
-})
-.then(function(nodes) {
-  return { 
-    top: nodes.top._data.data, 
-    bottom: nodes.bottom._data.data,
-  }
-})
-.then(function(nodes) {
-  return neo4j.relateNodes(nodes.top, nodes.bottom, { name: 'Shoop Sweep' });
-})
-.then(function(result) {
-  console.log('results');
-  console.log(result);
-});
+var position = {
+  x: 364,
+  y: 251
+};
+var drawOffset = {
+  x: 12.5,
+  y: 12.5
+};
+var angle = 72
 
-// d3 code for the d attr on a path to generate an elliptical curve
-// .attr("d", function(d) {
-//   var dx = d.target.x - d.source.x,
-//     dy = d.target.y - d.source.y,
-//     dr = Math.sqrt(dx * dx + dy * dy);
-//   return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
-// });
+var square = new SAT.Polygon(
+  new SAT.Vector(position.x, position.y), [
+  new SAT.Vector(-drawOffset.x, drawOffset.y),
+  new SAT.Vector(-drawOffset.x, -drawOffset.y),
+  new SAT.Vector(drawOffset.x, -drawOffset.y),
+  new SAT.Vector(drawOffset.x, drawOffset.y)]
+);
+
+console.log(square.calcPoints);
+
+// working sample calc points, reordered to be counter clockwise
+// var square = new SAT.Polygon(new SAT.Vector(364, 251), [
+//   new SAT.Vector(-18, 2),
+//   new SAT.Vector(-2, -18),
+//   new SAT.Vector(18, -2),
+//   new SAT.Vector(2, 18)
+// ]);
+
+// sample calc points from test map
+// var square = new SAT.Polygon(new SAT.Vector(364, 251), [
+//   new SAT.Vector(2, 18),
+//   new SAT.Vector(18, -2),
+//   new SAT.Vector(-2, -18),
+//   new SAT.Vector(-18, 2)
+// ]);
+
+var circle = new SAT.Circle(new SAT.Vector(377, 247), 8);
+
+var response = new SAT.Response();
+var collided = SAT.testPolygonCircle(square, circle, response);
+
+console.log(collided);
+console.log(response);
