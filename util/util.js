@@ -4,9 +4,6 @@ var Promise = require('bluebird'),
 var files = [
   'js/app.js',
   'js/augment.js',
-  'js/pb-shooter/geometry.js',
-  'js/pb-shooter/inputs.js',
-  'js/pb-shooter/unit.js',
   'js/vendor',
   'images',
   'css/app.css'

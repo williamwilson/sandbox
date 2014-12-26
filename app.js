@@ -9,7 +9,9 @@ var express = require('express'),
     Users = require('./db/users.js'),
     passportSocketIo = require('passport.socketio'),
     cookieParser = require('cookie-parser'), 
-    sessionSecret = 'never tell anyone this deathly surprise';
+    sessionSecret = 'never tell anyone this deathly surprise',
+    geometry = require('./pb-shooter/geometry.js'),
+    Map = geometry.Map;
 
 app.use(express.static(__dirname + '/public/tmp'));
 app.set('views', __dirname + '/views');
@@ -31,6 +33,7 @@ util.bundle();
 var server = require('http').createServer(app).listen(process.env.PORT, function() {
   console.log('App running at http://%s:%s', server.address().address, server.address().port);
 });
+
 var sio = socketio.listen(server);
 sio.use(passportSocketIo.authorize({
   cookieParser: cookieParser,
@@ -41,6 +44,10 @@ sio.use(passportSocketIo.authorize({
   success: function(data, accept) { accept(); },
   fail: function(data, message, error, accept) { accept(); }
 }));
+
+var Game = require('./pb-shooter/game.js');
+var game = new Game(new Map(1400, 500));
+game.start();
 
 app.get('/', function (req, res) {
   res.render('index.ejs', { sessionValue: req.session.sessionValue, results: [] });
@@ -55,18 +62,15 @@ app.get('/pb-shooter', function(req, res) {
 });
 
 app.post('/login', passport.authenticate('local'), function(req, res) {
-  console.log('authenticated successfully');
   res.send('authenticated successfully');
 });
 
-app.post('/logout', function(req, res) {
-  res.send('logged out');
-});
-
-app.get('/check', function(req, res) { });
-
 sio.on('connection', function(socket) {
   var user = socket.request.user;
+  
+  game.afterTick(function(gameState) {
+    socket.emit('tick', gameState);
+  });
   
   socket.on('check', function() {
     console.log(user);

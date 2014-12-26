@@ -4,6 +4,7 @@
   "description": "A NodeJS development sandbox",
   "main": "app.js",
   "dependencies": {
+    "augment": "^4.3.0",
     "bcrypt": "^0.8.0",
     "bluebird": "^2.3.11",
     "body-parser": "^1.9.3",
@@ -14,6 +15,7 @@
     "fs-extra": "^0.12.0",
     "knex": "^0.7.3",
     "mysql": "^2.5.3",
+    "nanotimer": "^0.3.6",
     "neo4j": "^1.1.1",
     "passport": "^0.2.1",
     "passport-local": "^1.0.0",

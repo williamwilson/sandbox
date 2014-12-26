@@ -19,104 +19,68 @@
   <script type="text/javascript" src="js\vendor\d3.v3.min.js" charset="utf-8"></script>
   <script type="text/javascript" src="js\vendor\SAT.min.js"></script>
   <script type="text/javascript" src="js\augment.js"></script>
-  <script type="text/javascript" src="js\pb-shooter\geometry.js"></script>
-  <script type="text/javascript" src="js\pb-shooter\inputs.js"></script>
-  <script type="text/javascript" src="js\pb-shooter\unit.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   
-  <div id="screen" style="width: 100%; height: 100%">
+  <div id="screen" style="width: 1400px; height: 500px; border: 1px solid black; margin-top: 10px; margin-left: 10px;">
   </div>
   
   <script>
     $(function() {
       var io = window.io.connect('https://sandbox-joelhoward0.c9.io');
-      var width = $('#screen').width();
-      var height = $('#screen').height();
+      var width = 1400; var height = 500;
       var field = d3.select('#screen').append('svg');
       
-      var inputs = new window.Inputs(new window.ClientInputs());
-      var Map = new window.Map(width, height);
-      var Game = new window.Game(Map, inputs);
-      var playerDead = false;
+      var gameStateBuffer = [];
+      var pause = false;
+      var gameTime = 0;
+      var maxLatency = 400;
+      var latencies = [];
       
-      var player = Game.spawnPlayer();
-      window.setInterval(function(){
-        if (playerDead)
+      io.on('tick', function(gameState) {
+        gameTime = gameState.time;
+        gameStateBuffer.push(gameState);
+      });
+      
+      window.setInterval(tick, 16);
+      
+      function tick() {
+        if (gameStateBuffer.length < 10)
+          pause = true;
+        if (gameStateBuffer.length > 50)
+          pause = false;
+        
+        if (pause)
           return;
           
-        playerDead = Game.player.dead;
-          
-        var gameState = Game.tick();
-        updateLasers();
-        updateBugs();
-        updateExplosions();
-        Game.checkCollisions();
-        updatePlayer();
-      }, 16);
-      
-      function buildTransformString(x, y, angle, rotateX, rotateY) {
-        return "translate( " + x + "," + y + ") rotate(" + angle + " " + rotateX + " " + rotateY + ")";
-      }
-      
-      function updatePlayer() {
-        var playerSprite = field.selectAll('image.player').data([player]);
-        playerSprite.enter().append('image');
-        playerSprite
-          .attr('class', 'player')
-          .attr('xlink:href', 'images/babyjoel.png')
-          .attr('height', 25)
-          .attr('width', 25)
-          .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.drawOffset.x, d.drawOffset.y); });
-        
-        // var playerHitBox = drawHitBox(player);
-        // var playerHitBoxSprite = field.selectAll('line.playerHitBox').data(playerHitBox);
-        // playerHitBoxSprite.enter().append('line');
-        
-        // playerHitBoxSprite
-        //   .attr('class', 'playerHitBox')
-        //   .attr('x1', function(d) { return d.x1; })
-        //   .attr('y1', function(d) { return d.y1; })
-        //   .attr('x2', function(d) { return d.x2; })
-        //   .attr('y2', function(d) { return d.y2; })
-        //   .attr('style', "stroke:rgb(255,0,0);stroke-width:1");
-        
-        if (playerDead) {
-          field.selectAll('image.player').remove();
-          alert('u ded');
+        var gameState = gameStateBuffer.shift();
+        while (gameState.time < (gameTime - 500)) {
+          gameState = gameStateBuffer.shift();
         }
-      }
-      
-      function updateLasers() {
-        field.selectAll('rect.laser').remove();
-        var laserSprites = field.selectAll('rect.laser').data(Game.lasers);
-        laserSprites.enter()
-          .append('rect');
         
-        laserSprites
-          .attr('class', 'laser')
-          .attr('height', 2)
-          .attr('width', 12)
-          .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.drawOffset.x, d.drawOffset.y); });
+        updateLatency(gameTime - gameState.time);
+        updateBugs(gameState.bugs);
       }
       
-      function updateExplosions() {
-        field.selectAll('image.explosion').remove();
-        var explosionSprites = field.selectAll('image.explosion').data(Game.explosions);
-        explosionSprites.enter()
-          .append('image');
+      function updateLatency(latency) {
+        latencies.push(latency);
+        if (latencies.length > 50)
+          latencies.shift();
           
-        explosionSprites
-          .attr('class', 'explosion')
-          .attr('xlink:href', 'images/boom.png')
-          .attr('height', 25)
-          .attr('width', 25)
-          .attr('opacity', function(d) { return d.lifespan / 40; })
-          .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.drawOffset.x, d.drawOffset.y); });
+        var averageLatency = d3.mean(latencies);
+        
+        var latencySprite = field.selectAll('text.latency').data([averageLatency]);
+        latencySprite.enter().append('text');
+        
+        latencySprite
+          .attr('class', 'latency')
+          .attr('x', 10)
+          .attr('y', 25)
+          .text(function(d) { return d3.round(d); });
       }
       
-      function updateBugs() {
+      function updateBugs(bugs) {
         field.selectAll('image.bug').remove();
-        var bugSprites = field.selectAll('image.bug').data(Game.bugs);
+        var bugSprites = field.selectAll('image.bug').data(bugs);
         bugSprites.enter()
           .append('image');
         
@@ -126,66 +90,12 @@
           .attr('height', 25)
           .attr('width', 25)
           .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.drawOffset.x, d.drawOffset.y); });
-          
-        var bugHitBoxes = [];
-        for (var i = 0; i < Game.bugs.length; i++) {
-          bugHitBoxes.push(Game.bugs[i].hitBox());
-        }
-        field.selectAll('circle.bugHitBox').remove();
-        var bugHitBoxSprites = field.selectAll('circle.bugHitBox').data(bugHitBoxes);
-        bugHitBoxSprites.enter().append('circle');
-        
-        bugHitBoxSprites
-          .attr('class', 'bugHitBox')
-          .attr('cx', function(d) { return d.pos.x; })
-          .attr('cy', function(d) { return d.pos.y; })
-          .attr('r', function(d) { return d.r; })
-          .attr('fill', 'none')
-          .attr('stroke', 'red');
       }
       
-      function drawHitBox(unit) {
-        var box = unit.hitBox();
-        var hitBoxLines = [];
-        for(var j = 0; j < box.calcPoints.length-1; j++) {
-          hitBoxLines.push({
-            x1: box.pos.x + box.calcPoints[j].x,
-            y1: box.pos.y + box.calcPoints[j].y,
-            x2: box.pos.x + box.calcPoints[j+1].x,
-            y2: box.pos.y + box.calcPoints[j+1].y
-          });
-        }
-        hitBoxLines.push({
-          x1: box.pos.x + box.calcPoints[j].x,
-          y1: box.pos.y + box.calcPoints[j].y,
-          x2: box.pos.x + box.calcPoints[0].x,
-          y2: box.pos.y + box.calcPoints[0].y
-        });
-        
-        return hitBoxLines;
+      function buildTransformString(x, y, angle, rotateX, rotateY) {
+        return "translate( " + x + "," + y + ") rotate(" + angle + " " + rotateX + " " + rotateY + ")";
       }
     });
   </script>
 </body>
 </html>
-
-<!--var hitBoxes = [];-->
-<!--for(var i = 0; i < Game.bugs.length; i++) {-->
-<!--  hitBoxes.push(Game.bugs[i].hitBox());-->
-<!--}-->
-<!--var bugHitBoxes = field.selectAll('circle.hitBox').data(hitBoxes);-->
-<!--bugHitBoxes.enter().append('circle');-->
-
-<!--bugHitBoxes-->
-<!--  .attr('class', 'hitBox')-->
-<!--  .attr('cx', function(d) { return d.pos.x; })-->
-<!--  .attr('cy', function(d) { return d.pos.y; })-->
-<!--  .attr('r', function(d) { return d.r })-->
-<!--  .attr('fill', 'none')-->
-<!--  .attr('stroke', 'black');-->
-  
-<!--var laserHitBoxes = field.selectAll('line.hitBox').data(hitBoxLines);-->
-<!--laserHitBoxes.enter().append('line');-->
-
-<!--laserHitBoxes-->
-<!--  .attr('class', 'hitBox')-->
