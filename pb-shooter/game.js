@@ -23,6 +23,7 @@ var Game = augment(Object, function() {
     this.bugDelay = 1000;
     this.afterTickHandlers = [];
     this.time = 0;
+    this.players = {};
     
     new Nanotimer().setTimeout(function() {
       self.bugCooldown = false;
@@ -92,9 +93,19 @@ var Game = augment(Object, function() {
     for(var i = 0; i < this.afterTickHandlers.length; i++) {
       this.afterTickHandlers[i]({
         time: this.time,
-        bugs: this.bugs
+        bugs: this.bugs,
+        players: this.players
       });
     }
+    
+    var self = this;
+    Object.keys(this.players).forEach(function(key) {
+      var player = self.players[key];
+      
+      player.disconnectTimer -= 16;
+      if (player.disconnectTimer <= 0)
+        delete self.players[key];
+    });
   };
   this.start = function() {
     var self = this;
@@ -102,6 +113,13 @@ var Game = augment(Object, function() {
     this.timer.setInterval(function() { 
       self.tick.call(self); 
     }, self, '16m');
+  };
+  this.setInputs = function(socketId, inputs) {
+    if (!this.players[socketId])
+      this.players[socketId] = { socketId: socketId };
+      
+    this.players[socketId].inputs = inputs;
+    this.players[socketId].disconnectTimer = 5000;
   };
 });
 

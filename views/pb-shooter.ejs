@@ -29,6 +29,7 @@
       var io = window.io.connect('https://sandbox-joelhoward0.c9.io');
       var width = 1400; var height = 500;
       var field = d3.select('#screen').append('svg');
+      var $field = $('#screen svg');
       
       var gameStateBuffer = [];
       var pause = false;
@@ -36,29 +37,68 @@
       var maxLatency = 400;
       var latencies = [];
       
+      var inputs = {
+        mouse: { x: 0, y: 0, left: false }
+      }
+      
       io.on('tick', function(gameState) {
+        console.log('received tick ' + gameState.time);
         gameTime = gameState.time;
         gameStateBuffer.push(gameState);
       });
       
-      window.setInterval(tick, 16);
+      window.setInterval(tick, 16*3);
+      
+      $field.on('mousemove', function(e) {
+        var parentOffset = $(this).parent().offset(); 
+        //or $(this).offset(); if you really just want the current element's offset
+        var relX = e.pageX - parentOffset.left;
+        var relY = e.pageY - parentOffset.top;
+        
+        inputs.mouse.x = relX;
+        inputs.mouse.y = relY;
+      });
+      
+      $field.on('mousedown', function(e) {
+        inputs.mouse.left = true;
+      });
+      
+      $(document).on('mouseup', function(e) {
+        inputs.mouse.left = false;
+      });
       
       function tick() {
-        if (gameStateBuffer.length < 10)
-          pause = true;
-        if (gameStateBuffer.length > 50)
-          pause = false;
-        
-        if (pause)
-          return;
-          
         var gameState = gameStateBuffer.shift();
-        while (gameState.time < (gameTime - 500)) {
+        while (gameState.time < (gameTime - 54)) {
           gameState = gameStateBuffer.shift();
         }
         
+        console.log(gameStateBuffer.length);
+        
+        sendInputs(inputs);
         updateLatency(gameTime - gameState.time);
         updateBugs(gameState.bugs);
+        updatePlayers(gameState.players);
+      }
+      
+      var previousSentInputs = {
+        mouse: {
+          x: 0,
+          y: 0,
+          left: false
+        }
+      };
+      function sendInputs(inputs) {
+        if (inputs.mouse.x == previousSentInputs.mouse.x &&
+            inputs.mouse.y == previousSentInputs.mouse.y &&
+            inputs.mouse.left == previousSentInputs.mouse.left)
+          return;
+          
+        previousSentInputs.mouse.x = inputs.mouse.x;
+        previousSentInputs.mouse.y = inputs.mouse.y;
+        previousSentInputs.mouse.left = inputs.mouse.left;
+          
+        io.emit('inputs', inputs);
       }
       
       function updateLatency(latency) {
@@ -76,6 +116,22 @@
           .attr('x', 10)
           .attr('y', 25)
           .text(function(d) { return d3.round(d); });
+      }
+      
+      function updatePlayers(players) {
+        players = $.map(players, function(value, index) { return value; });
+        
+        field.selectAll('image.player').remove();
+        var playerSprites = field.selectAll('image.player').data(players);
+        playerSprites.enter()
+          .append('image');
+        
+        playerSprites
+          .attr('class', 'player')
+          .attr('xlink:href', 'images/babyjoel.png')
+          .attr('height', 25)
+          .attr('width', 25)
+          .attr('transform', function(d) { return buildTransformString(d.inputs.mouse.x, d.inputs.mouse.y, 0, 0, 0); });
       }
       
       function updateBugs(bugs) {
