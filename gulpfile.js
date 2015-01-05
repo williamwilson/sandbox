@@ -5,7 +5,7 @@ var gulp = require('gulp'),
 
 var node;
 var client = ['./public/css/*.*', './public/js/*.*', './pb-shooter/*.js'];
-var server = ['./app.js'];
+var server = ['./app.js', './pb-shooter/*.js'];
 
 gulp.task('server', function() {
   if (node) node.kill();
@@ -25,7 +25,12 @@ gulp.task('pipeline', function() {
 });
 
 gulp.task('browserify', function() {
-  return browserify('./pb-shooter/game.js').bundle()
+  return browserify('./pb-shooter/game.js', { detectGlobals: false })
+    .require('./pb-shooter/game.js', { expose: 'Game'})
+    .require('./pb-shooter/geometry.js', { expose: 'Geometry' })
+    .require('browser-process-hrtime')
+    .require('setImmediate')
+    .bundle()
     .pipe(source('game.js'))
     .pipe(gulp.dest('./public/tmp/js/'));
 });

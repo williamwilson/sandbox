@@ -17,8 +17,7 @@
   <script type="text/javascript" src="js\vendor\knockout-3.2.0.js"></script>
   <script type="text/javascript" src="js\vendor\jquery.form.min.js"></script>
   <script type="text/javascript" src="js\vendor\d3.v3.min.js" charset="utf-8"></script>
-  <script type="text/javascript" src="js\vendor\SAT.min.js"></script>
-  <script type="text/javascript" src="js\augment.js"></script>
+  <script type="text/javascript" src="js\game.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   
   <div id="screen" style="width: 1400px; height: 500px; border: 1px solid black; margin-top: 10px; margin-left: 10px;">
@@ -26,11 +25,20 @@
   
   <script>
     $(function() {
-      var io = window.io.connect('https://sandbox-joelhoward0.c9.io');
+      var process = {
+        version: '11.11',
+        hrtime: require('browser-process-hrtime')
+      };
+      window.process = process;
+      require('setImmediate');
+
+      var io = window.io.connect(window.location.origin);
       var width = 1400; var height = 500;
       var field = d3.select('#screen').append('svg');
       var $field = $('#screen svg');
-      
+      var Map = require('Geometry').Map;
+      var localGame = new require('Game')(new Map(width, height));
+
       var gameStateBuffer = [];
       var pause = false;
       var gameTime = 0;
@@ -42,7 +50,6 @@
       }
       
       io.on('tick', function(gameState) {
-        console.log('received tick ' + gameState.time);
         gameTime = gameState.time;
         gameStateBuffer.push(gameState);
       });
@@ -69,11 +76,14 @@
       
       function tick() {
         var gameState = gameStateBuffer.shift();
+        if (!gameState) {
+          // simulate a tick...
+          return;
+        }
+
         while (gameState.time < (gameTime - 54)) {
           gameState = gameStateBuffer.shift();
         }
-        
-        console.log(gameStateBuffer.length);
         
         sendInputs(inputs);
         updateLatency(gameTime - gameState.time);

@@ -94,7 +94,12 @@ var Game = augment(Object, function() {
       this.afterTickHandlers[i]({
         time: this.time,
         bugs: this.bugs,
-        players: this.players
+        bugCooldown: this.bugCooldown,
+        bugDelay: this.bugDelay,
+        players: this.players,
+        lasers: this.lasers,
+        laserCooldown: this.laserCooldown,
+        explosions: this.explosions,
       });
     }
     
@@ -121,6 +126,16 @@ var Game = augment(Object, function() {
     this.players[socketId].inputs = inputs;
     this.players[socketId].disconnectTimer = 5000;
   };
+  this.syncGameState = function(gameState) {
+    this.bugs = gameState.bugs;
+    this.lasers = gameState.lasers;
+    this.explosions = gameState.explosions;
+    this.laserCooldown = gameState.laserCooldown;
+    this.bugCooldown = gameState.bugCooldown;
+    this.bugDelay = gameState.bugDelay;
+    this.time = gameState.time;
+    this.players = gameState.players;
+  }
 });
 
 module.exports = Game;
