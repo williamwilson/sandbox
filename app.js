@@ -1,7 +1,6 @@
 var express = require('express'),
     app = express(),
     socketio = require('socket.io'),
-    util = require('./util/util.js'),
     passport = require('passport'),
     bodyParser = require('body-parser'),
     session = require('express-session'),
@@ -27,8 +26,6 @@ app.use(passport.session({store: store, secret: sessionSecret}));
 passport.serializeUser(Users.serialize);
 passport.deserializeUser(Users.deserialize);
 passport.use(require('./auth/local.js'));
-
-util.bundle();
 
 var server = require('http').createServer(app).listen(process.env.PORT, function() {
   console.log('App running at http://%s:%s', server.address().address, server.address().port);
