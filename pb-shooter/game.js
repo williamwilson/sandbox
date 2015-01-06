@@ -56,7 +56,9 @@ var Game = augment(Object, function() {
     var bug = new Bug(center, vector);
     this.bugs.push(bug);
   };
-  this.tick = function() {
+  this.tick = function(gameState) {
+    this.syncGameState(gameState);
+
     this.time += 16;
     this.bugCooldown -= 16;
     this.laserCooldown -= 16;
@@ -100,6 +102,8 @@ var Game = augment(Object, function() {
       if (player.disconnectTimer <= 0)
         delete self.players[key];
     });
+
+    return this;
   };
   this.setInputs = function(socketId, inputs) {
     if (!this.players[socketId])

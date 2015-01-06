@@ -47,8 +47,9 @@ sio.use(passportSocketIo.authorize({
 var Game = require('./pb-shooter/game.js');
 var game = new Game(new Map(1400, 500));
 var gameTimer = new Nanotimer();
+var gameState = game;
 gameTimer.setInterval(function() {
-  game.tick.call(game);
+  gameState = game.tick.call(game, gameState);
 }, game, '16m');
 
 app.get('/', function (req, res) {
