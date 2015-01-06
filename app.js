@@ -10,7 +10,8 @@ var express = require('express'),
     cookieParser = require('cookie-parser'), 
     sessionSecret = 'never tell anyone this deathly surprise',
     geometry = require('./pb-shooter/geometry.js'),
-    Map = geometry.Map;
+    Map = geometry.Map,
+    Nanotimer = require('Nanotimer');
 
 app.use(express.static(__dirname + '/public/tmp'));
 app.set('views', __dirname + '/views');
@@ -27,6 +28,7 @@ passport.serializeUser(Users.serialize);
 passport.deserializeUser(Users.deserialize);
 passport.use(require('./auth/local.js'));
 
+process.env.PORT = 1337;
 var server = require('http').createServer(app).listen(process.env.PORT, function() {
   console.log('App running at http://%s:%s', server.address().address, server.address().port);
 });
@@ -44,7 +46,10 @@ sio.use(passportSocketIo.authorize({
 
 var Game = require('./pb-shooter/game.js');
 var game = new Game(new Map(1400, 500));
-game.start();
+var gameTimer = new Nanotimer();
+gameTimer.setInterval(function() {
+  game.tick.call(game);
+}, game, '16m');
 
 app.get('/', function (req, res) {
   res.render('index.ejs', { sessionValue: req.session.sessionValue, results: [] });

@@ -25,13 +25,6 @@
   
   <script>
     $(function() {
-      var process = {
-        version: '11.11',
-        hrtime: require('browser-process-hrtime')
-      };
-      window.process = process;
-      require('setImmediate');
-
       var io = window.io.connect(window.location.origin);
       var width = 1400; var height = 500;
       var field = d3.select('#screen').append('svg');

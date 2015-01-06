@@ -4,7 +4,6 @@ var
   Point = geometry.Point,
   Vector = geometry.Vector,
   augment = require('augment'),
-  Nanotimer = require('nanotimer'),
   Bug = require('./bug.js'),
   EventEmitter = require('events').EventEmitter;
 
@@ -18,16 +17,11 @@ var Game = augment(Object, function() {
     this.bugs = [];
     this.lasers = [];
     this.explosions = [];
-    this.laserCooldown = false;
-    this.bugCooldown = true;
-    this.bugDelay = 1000;
+    this.laserCooldown = 500;
+    this.bugCooldown = 1000;
     this.afterTickHandlers = [];
     this.time = 0;
     this.players = {};
-    
-    new Nanotimer().setTimeout(function() {
-      self.bugCooldown = false;
-    }, self, '3s');
   };
   this.afterTick = function(callback) {
     this.afterTickHandlers.push(callback);
@@ -39,39 +33,34 @@ var Game = augment(Object, function() {
       throw new Error("target was not a Point, it was: " + target);
       
     var self = this;
-    if (self.laserCooldown)
+    if (self.laserCooldown > 0)
       return;
-    self.laserCooldown = true;
+    self.laserCooldown = 500;
     
     var vector = new Vector(origin, target);
     
     var laser = new Laser(origin, vector);
     this.lasers.push(laser);
-    
-    new Nanotimer().setTimeout(function() {
-      self.laserCooldown = false;
-    }, self, '0.5s');
   };
   this.spawnBug = function() {
     var self = this;
-    if (self.bugCooldown)
+    if (self.bugCooldown > 0)
       return;
-    self.bugCooldown = true;
+
+    self.bugCooldown = 1000;
       
     var target = this.map.getRandomPoint();
     var center = this.map.center();
     var vector = new Vector(center, target);
-  
-    new Nanotimer().setTimeout(function() {
-      this.bugDelay = this.bugDelay - 10;
-      self.bugCooldown = false;
-    }, self, this.bugDelay + 'm');
   
     var bug = new Bug(center, vector);
     this.bugs.push(bug);
   };
   this.tick = function() {
     this.time += 16;
+    this.bugCooldown -= 16;
+    this.laserCooldown -= 16;
+
     if (this.bugs.length < 10)
       this.spawnBug();
     
@@ -111,13 +100,6 @@ var Game = augment(Object, function() {
       if (player.disconnectTimer <= 0)
         delete self.players[key];
     });
-  };
-  this.start = function() {
-    var self = this;
-    this.timer = new Nanotimer();
-    this.timer.setInterval(function() { 
-      self.tick.call(self); 
-    }, self, '16m');
   };
   this.setInputs = function(socketId, inputs) {
     if (!this.players[socketId])
