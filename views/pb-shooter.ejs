@@ -30,11 +30,12 @@
       var field = d3.select('#screen').append('svg');
       var $field = $('#screen svg');
       var Map = require('Geometry').Map;
-      var localGame = new require('Game')(new Map(width, height));
+      var Game = require('Game');
+      var localGame = new Game(new Map(width, height));
 
       var gameStateBuffer = [];
+      var lastGameState;
       var pause = false;
-      var gameTime = 0;
       var maxLatency = 400;
       var latencies = [];
       
@@ -43,11 +44,10 @@
       }
       
       io.on('tick', function(gameState) {
-        gameTime = gameState.time;
         gameStateBuffer.push(gameState);
       });
       
-      window.setInterval(tick, 16*3);
+      window.setInterval(tick, 16);
       
       $field.on('mousemove', function(e) {
         var parentOffset = $(this).parent().offset(); 
@@ -70,16 +70,20 @@
       function tick() {
         var gameState = gameStateBuffer.shift();
         if (!gameState) {
-          // simulate a tick...
-          return;
-        }
+          if (!lastGameState) {
+            console.log('loading...');
+            return;
+          }
 
-        while (gameState.time < (gameTime - 54)) {
-          gameState = gameStateBuffer.shift();
+          //generate a local game state
+          localGame.syncGameState(lastGameState);
+          var localGameState = localGame.tick();
         }
         
+        lastGameState = gameState;
+
         sendInputs(inputs);
-        updateLatency(gameTime - gameState.time);
+        // updateLatency(gameState - gameState.time);
         updateBugs(gameState.bugs);
         updatePlayers(gameState.players);
       }

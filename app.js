@@ -49,7 +49,7 @@ var game = new Game(new Map(1400, 500));
 var gameTimer = new Nanotimer();
 var gameState = game;
 gameTimer.setInterval(function() {
-  gameState = game.tick.call(game, gameState);
+  gameState = game.tick();
 }, game, '16m');
 
 app.get('/', function (req, res) {

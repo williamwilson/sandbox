@@ -1,7 +1,6 @@
 var 
   geometry = require('./geometry.js'),
   Map = geometry.Map,
-  Point = geometry.Point,
   Vector = geometry.Vector,
   augment = require('augment'),
   Bug = require('./bug.js'),
@@ -9,8 +8,6 @@ var
 
 var Game = augment(Object, function() {
   this.constructor = function(map) {
-    if (typeof map != "object" || !(map instanceof Map))
-      throw new Error("map was not a Map, it was: " + map);
     var self = this;
     
     this.map = map;
@@ -26,18 +23,13 @@ var Game = augment(Object, function() {
   this.afterTick = function(callback) {
     this.afterTickHandlers.push(callback);
   };
-  this.spawnLaser = function(origin, target) {
-    if (typeof origin != "object" || !(origin instanceof Point))
-      throw new Error("origin was not a Point, it was: " + origin);
-    if (typeof target != "object" || !(target instanceof Point))
-      throw new Error("target was not a Point, it was: " + target);
-      
+  this.spawnLaser = function(origin, target) {      
     var self = this;
     if (self.laserCooldown > 0)
       return;
     self.laserCooldown = 500;
     
-    var vector = new Vector(origin, target);
+    var vector = Vector.fromPoints(origin, target);
     
     var laser = new Laser(origin, vector);
     this.lasers.push(laser);
@@ -51,14 +43,12 @@ var Game = augment(Object, function() {
       
     var target = this.map.getRandomPoint();
     var center = this.map.center();
-    var vector = new Vector(center, target);
+    var vector = Vector.fromPoints(center, target);
   
     var bug = new Bug(center, vector);
     this.bugs.push(bug);
   };
-  this.tick = function(gameState) {
-    this.syncGameState(gameState);
-
+  this.tick = function() {
     this.time += 16;
     this.bugCooldown -= 16;
     this.laserCooldown -= 16;
@@ -68,6 +58,12 @@ var Game = augment(Object, function() {
     
     for(var i = 0; i < this.bugs.length; i++) {
       var bug = this.bugs[i];
+
+      if (!(bug instanceof Bug)) {
+        bug = new Bug(bug.position, bug.vector);
+        this.bugs[i] = bug;
+      }
+
       bug.move();
       if (this.map.pointOffMap(bug.position)) {
         this.bugs.splice(i, 1); 

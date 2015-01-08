@@ -1,39 +1,19 @@
 var augment = require('augment');
 
-var Point = augment(Object, function() {
-  this.constructor = function(x, y) {
-    if (typeof x != "number")
-      throw new Error("x was not a number, it was: " + x);
-    if (typeof y != "number")
-      throw new Error("y was not a number, it was: " + y);
-      
-    this.x = x;
-    this.y = y;
-  }
-});
-
 var Map = augment(Object, function() {
-  this.constructor = function(width, height) {
-    if (typeof width != "number")
-      throw new Error("width was not a number, it was: " + width);
-    if (typeof height != "number")
-      throw new Error("height was not a number, it was: " + height);
-    
+  this.constructor = function(width, height) {    
     this.width = width;
     this.height = height;
   };
   this.getRandomPoint = function() {
     var x = Math.floor(Math.random() * this.width);
     var y = Math.floor(Math.random() * this.height);
-    return new Point(x, y);
+    return { x: x, y: y };
   };
   this.center = function() {
-    return new Point(this.width/2, this.height/2);
+    return { x: this.width/2, y: this.height/2 };
   };
-  this.pointOffMap = function(point) {
-    if (typeof point != "object" || !(point instanceof Point))
-      throw new Error("point was not a point, it was: " + point);
-    
+  this.pointOffMap = function(point) {    
     if (point.x < -10 || point.x > this.width + 10)
       return true;
     if (point.y < -10 || point.y > this.height + 10)
@@ -41,27 +21,26 @@ var Map = augment(Object, function() {
   };
 });
 
-var Vector = augment(Object, function () {
-  this.constructor = function(pointA, pointB) {
-    if (typeof pointA != "object" || !(pointA instanceof Point))
-      throw new Error("pointA was not a number, it was: " + pointA);
-    if (typeof pointB != "object" || !(pointB instanceof Point))
-      throw new Error("pointB was not a number, it was: " + pointB);
-    
-    this.pointA = pointA;
-    this.pointB = pointB;
+var Vector = {
+  fromPoints: function(pointA, pointB) {
+    var vector = {
+      pointA: pointA,
+      pointB: pointB,
+    };
+
     var dx = pointA.x - pointB.x;
     var dy = pointA.y - pointB.y;
-    this.distance = Math.sqrt((dx*dx) + (dy*dy));
-    this.angle = Math.asin(dy / this.distance) * 180 / Math.PI;
+    vector.distance = Math.sqrt((dx*dx) + (dy*dy));
+    vector.angle = Math.asin(dy / vector.distance) * 180 / Math.PI;
     if (dx < 0)
-      this.angle = -this.angle
-    this.heading = {x: dx / this.distance, y: dy / this.distance};
-  };
-});
+      vector.angle = -vector.angle
+    vector.heading = {x: dx / vector.distance, y: dy / vector.distance};
+
+    return vector;
+  }
+}
 
 module.exports = {
-  Point: Point,
   Vector: Vector,
   Map: Map
 };
