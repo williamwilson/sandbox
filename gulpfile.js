@@ -1,11 +1,14 @@
 var gulp = require('gulp'),
   spawn = require('child_process').spawn,
   browserify = require('browserify'),
-  source = require('vinyl-source-stream');
+  source = require('vinyl-source-stream'),
+  jasmine = require('gulp-jasmine');
 
 var node;
 var client = ['./public/css/*.*', './public/js/*.*', './pb-shooter/*.js'];
 var server = ['./app.js', './pb-shooter/*.js'];
+var tests = ['./pb-shooter/tests/*.js'];
+var test = server.concat(tests);
 
 gulp.task('server', function() {
   if (node) node.kill();
@@ -33,9 +36,20 @@ gulp.task('browserify', function() {
     .pipe(gulp.dest('./public/tmp/js/'));
 });
 
-gulp.task('default', ['server', 'pipeline', 'browserify'], function() {
+gulp.task('t', ['test'], function() { 
+  gulp.watch(test, ['test'])
+});
+
+gulp.task('test', function() {  
+  return gulp.src(tests)
+    .pipe(jasmine({includeStackTrace: true}))
+    .on('error', function(e) { });
+});
+
+gulp.task('default', ['test', 'server', 'pipeline', 'browserify'], function() {
   gulp.watch(client, ['pipeline', 'browserify']);
   gulp.watch(server, ['server']);
+  gulp.watch(test, ['test']);
 });
 
 process.on('exit', function() {

@@ -68,20 +68,6 @@ app.post('/login', passport.authenticate('local'), function(req, res) {
   res.send('authenticated successfully');
 });
 
-var tickCount = 0;
-var pushInterval = 3;
-var sockets = [];
-game.afterTick(function(gameState) {
-  tickCount++;
-  tickCount = tickCount % pushInterval;
-  if (tickCount != 0)
-    return;
-    
-  for(var i = 0; i < sockets.length; i++) {
-    sockets[i].emit('tick', gameState);
-  }
-});
-
 sio.on('connection', function(socket) {
   var user = socket.request.user;
   sockets.push(socket);
