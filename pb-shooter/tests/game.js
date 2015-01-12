@@ -78,4 +78,17 @@ describe("Game", function() {
     
     expect(game.state.bugs.length).toBe(1);
   });
+  it("should inflate a GameState object it receives through .sync", function() {
+    var game = new Game();
+    game.sync({
+      time: 0,
+      bugs: [],
+      bugCooldown: 127
+    });
+    game.tick();
+
+    expect(game.state.time).toBe(1);
+    expect(game.state.bugs.length).toBe(0);
+    expect(game.state.bugCooldown).toBe(111);
+  });
 });

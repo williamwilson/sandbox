@@ -16,6 +16,9 @@ var Game = augment(Object, function() {
     this.clientState = this.states[this.time - this.delay];
   };
   this.sync = function(syncState) {
+    if (!(syncState instanceof GameState))
+      syncState = new GameState(syncState);
+
     this.state = syncState;
     this.states = this.states.slice(0, syncState.time);
     this.states.push(syncState);

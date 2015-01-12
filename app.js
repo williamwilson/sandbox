@@ -11,7 +11,8 @@ var express = require('express'),
     sessionSecret = 'never tell anyone this deathly surprise',
     geometry = require('./pb-shooter/geometry.js'),
     Map = geometry.Map,
-    Nanotimer = require('Nanotimer');
+    Nanotimer = require('Nanotimer'),
+    Game = require('./pb-shooter/game.js');
 
 app.use(express.static(__dirname + '/public/tmp'));
 app.set('views', __dirname + '/views');
@@ -44,14 +45,6 @@ sio.use(passportSocketIo.authorize({
   fail: function(data, message, error, accept) { accept(); }
 }));
 
-var Game = require('./pb-shooter/game.js');
-var game = new Game(new Map(1400, 500));
-var gameTimer = new Nanotimer();
-var gameState = game;
-gameTimer.setInterval(function() {
-  gameState = game.tick();
-}, game, '16m');
-
 app.get('/', function (req, res) {
   res.render('index.ejs', { sessionValue: req.session.sessionValue, results: [] });
 });
@@ -67,6 +60,22 @@ app.get('/pb-shooter', function(req, res) {
 app.post('/login', passport.authenticate('local'), function(req, res) {
   res.send('authenticated successfully');
 });
+
+var sockets = [];
+
+var game = new Game();
+var gameTimer = new Nanotimer();
+
+gameTimer.setInterval(function() {
+  game.tick();
+}, game, '16m');
+
+var pushTimer = new Nanotimer();
+pushTimer.setInterval(function() {
+  for(var i = 0; i < sockets.length; i++) {
+    sockets[i].emit('tick', game.clientState);
+  }
+}, this, '16m');
 
 sio.on('connection', function(socket) {
   var user = socket.request.user;

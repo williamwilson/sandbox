@@ -25,122 +25,25 @@
   
   <script>
     $(function() {
-      var io = window.io.connect(window.location.origin);
-      var width = 1400; var height = 500;
-      var field = d3.select('#screen').append('svg');
-      var $field = $('#screen svg');
-      var Map = require('Geometry').Map;
       var Game = require('Game');
-      var localGame = new Game(new Map(width, height));
 
-      var gameStateBuffer = [];
-      var lastGameState;
-      var pause = false;
-      var maxLatency = 400;
-      var latencies = [];
-      
-      var inputs = {
-        mouse: { x: 0, y: 0, left: false }
-      }
-      
+      var io = window.io.connect(window.location.origin);
+      var game = new Game();
+      var field = d3.select('#screen').append('svg');
+
       io.on('tick', function(gameState) {
-        gameStateBuffer.push(gameState);
+        game.sync(gameState);
       });
-      
-      window.setInterval(tick, 16);
-      
-      $field.on('mousemove', function(e) {
-        var parentOffset = $(this).parent().offset(); 
-        //or $(this).offset(); if you really just want the current element's offset
-        var relX = e.pageX - parentOffset.left;
-        var relY = e.pageY - parentOffset.top;
-        
-        inputs.mouse.x = relX;
-        inputs.mouse.y = relY;
-      });
-      
-      $field.on('mousedown', function(e) {
-        inputs.mouse.left = true;
-      });
-      
-      $(document).on('mouseup', function(e) {
-        inputs.mouse.left = false;
-      });
-      
-      function tick() {
-        var gameState = gameStateBuffer.shift();
-        if (!gameState) {
-          if (!lastGameState) {
-            console.log('loading...');
-            return;
-          }
 
-          //generate a local game state
-          localGame.syncGameState(lastGameState);
-          var localGameState = localGame.tick();
-        }
-        
-        lastGameState = gameState;
+      window.setInterval(function() {
+        game.tick();
+        render(game.state);
+      }, 16);
 
-        sendInputs(inputs);
-        // updateLatency(gameState - gameState.time);
+      function render(gameState) {
         updateBugs(gameState.bugs);
-        updatePlayers(gameState.players);
       }
-      
-      var previousSentInputs = {
-        mouse: {
-          x: 0,
-          y: 0,
-          left: false
-        }
-      };
-      function sendInputs(inputs) {
-        if (inputs.mouse.x == previousSentInputs.mouse.x &&
-            inputs.mouse.y == previousSentInputs.mouse.y &&
-            inputs.mouse.left == previousSentInputs.mouse.left)
-          return;
-          
-        previousSentInputs.mouse.x = inputs.mouse.x;
-        previousSentInputs.mouse.y = inputs.mouse.y;
-        previousSentInputs.mouse.left = inputs.mouse.left;
-          
-        io.emit('inputs', inputs);
-      }
-      
-      function updateLatency(latency) {
-        latencies.push(latency);
-        if (latencies.length > 50)
-          latencies.shift();
-          
-        var averageLatency = d3.mean(latencies);
-        
-        var latencySprite = field.selectAll('text.latency').data([averageLatency]);
-        latencySprite.enter().append('text');
-        
-        latencySprite
-          .attr('class', 'latency')
-          .attr('x', 10)
-          .attr('y', 25)
-          .text(function(d) { return d3.round(d); });
-      }
-      
-      function updatePlayers(players) {
-        players = $.map(players, function(value, index) { return value; });
-        
-        field.selectAll('image.player').remove();
-        var playerSprites = field.selectAll('image.player').data(players);
-        playerSprites.enter()
-          .append('image');
-        
-        playerSprites
-          .attr('class', 'player')
-          .attr('xlink:href', 'images/babyjoel.png')
-          .attr('height', 25)
-          .attr('width', 25)
-          .attr('transform', function(d) { return buildTransformString(d.inputs.mouse.x, d.inputs.mouse.y, 0, 0, 0); });
-      }
-      
+
       function updateBugs(bugs) {
         field.selectAll('image.bug').remove();
         var bugSprites = field.selectAll('image.bug').data(bugs);
@@ -154,10 +57,12 @@
           .attr('width', 25)
           .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.drawOffset.x, d.drawOffset.y); });
       }
-      
+
       function buildTransformString(x, y, angle, rotateX, rotateY) {
         return "translate( " + x + "," + y + ") rotate(" + angle + " " + rotateX + " " + rotateY + ")";
       }
+
+      window.game = game;
     });
   </script>
 </body>
