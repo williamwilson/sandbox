@@ -26,6 +26,10 @@
   <script>
     $(function() {
       var Game = require('Game');
+      var GameState = require('GameState');
+      GameState.spawnBug = function() {
+        console.log('spawned a bug but not really, lol');
+      }
 
       var io = window.io.connect(window.location.origin, { transports: ['websocket']});
       var game = new Game();

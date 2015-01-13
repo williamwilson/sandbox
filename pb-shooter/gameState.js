@@ -17,18 +17,7 @@ var GameState = augment(Object, function() {
     this.map = new Map(800, 500);
   };
   this.spawnBug = function() {
-    var self = this;
-    if (self.bugCooldown > 0)
-      return;
-
-    self.bugCooldown = 1000;
-      
-    var target = this.map.getRandomPoint();
-    var center = this.map.center();
-    var vector = Vector.fromPoints(center, target);
-  
-    var bug = new Bug(center, vector);
-    this.bugs.push(bug);
+    GameState.spawnBug.call(this);
   };
   this._tick = function() {
     this.time++;
@@ -80,5 +69,18 @@ GameState.validate = function(obj) {
     }
   }
 };
+GameState.spawnBug = function() {
+  if (this.bugCooldown > 0)
+    return;
+
+  this.bugCooldown = 1000;
+    
+  var target = this.map.getRandomPoint();
+  var center = this.map.center();
+  var vector = Vector.fromPoints(center, target);
+
+  var bug = new Bug(center, vector);
+  this.bugs.push(bug);
+}
 
 module.exports = GameState;
