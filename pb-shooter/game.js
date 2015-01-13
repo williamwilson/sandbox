@@ -23,6 +23,11 @@ var Game = augment(Object, function() {
     this.states = this.states.slice(0, syncState.time);
     this.states.push(syncState);
 
+    if (syncState.time > this.time) {
+      this.time = syncState.time;
+      return;
+    }
+
     while(this.state.time < this.time) {
       this.state = this.state.tick();
       this.states.push(this.state);

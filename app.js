@@ -11,7 +11,7 @@ var express = require('express'),
     sessionSecret = 'never tell anyone this deathly surprise',
     geometry = require('./pb-shooter/geometry.js'),
     Map = geometry.Map,
-    Nanotimer = require('Nanotimer'),
+    Nanotimer = require('nanotimer'),
     Game = require('./pb-shooter/game.js');
 
 app.use(express.static(__dirname + '/public/tmp'));
@@ -29,7 +29,6 @@ passport.serializeUser(Users.serialize);
 passport.deserializeUser(Users.deserialize);
 passport.use(require('./auth/local.js'));
 
-process.env.PORT = 1337;
 var server = require('http').createServer(app).listen(process.env.PORT, function() {
   console.log('App running at http://%s:%s', server.address().address, server.address().port);
 });

@@ -20,27 +20,67 @@
   <script type="text/javascript" src="js\game.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   
-  <div id="screen" style="width: 1400px; height: 500px; border: 1px solid black; margin-top: 10px; margin-left: 10px;">
+  <div id="screen" style="width: 800px; height: 500px; border: 1px solid black; margin-top: 10px; margin-left: 10px;">
   </div>
   
   <script>
     $(function() {
       var Game = require('Game');
 
-      var io = window.io.connect(window.location.origin);
+      var io = window.io.connect(window.location.origin, { transports: ['websocket']});
       var game = new Game();
+      var started = false;
       var field = d3.select('#screen').append('svg');
-
+      var latestServerState;
+      var newServerState = false;
+      var lastRenderedTime = 0;
+      window.ticks = 0;
+      window.renderedFrames = 0;
+    
       io.on('tick', function(gameState) {
-        game.sync(gameState);
+        if (!started) {
+          latestServerState = gameState;
+          start(gameState);
+          return;
+        }
+        
+        if (gameState.time > latestServerState.time) {
+          newServerState = true;
+          latestServerState = gameState;
+        }
       });
 
-      window.setInterval(function() {
-        game.tick();
-        render(game.state);
-      }, 16);
+      function start(gameState) {
+        started = true;
+        console.log('setting game time to ', gameState.time);
+        game.time = gameState.time;
+        
+        window.setInterval(function() {
+          if (newServerState) {
+            newServerState = false;
+            game.sync(latestServerState);
+          }
+          ticks++;
+          game.tick();
+        }, 16);
+        
+        function frame() {
+          renderedFrames++;
+            
+          if (game.state.time >= lastRenderedTime) {
+            lastRenderedTime = game.state.time;
+            render(game.state);
+          }
+          
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      }
 
       function render(gameState) {
+        if (!gameState)
+          return;
+          
         updateBugs(gameState.bugs);
       }
 

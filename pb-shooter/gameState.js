@@ -14,7 +14,7 @@ var GameState = augment(Object, function() {
     this.bugCooldown = 1000;
     this.time = 0;
     this.fromData(data);
-    this.map = new Map(1400, 500);
+    this.map = new Map(800, 500);
   };
   this.spawnBug = function() {
     var self = this;
