@@ -32,6 +32,7 @@ gulp.task('browserify', function() {
   return browserify('./pb-shooter/game.js', { detectGlobals: false })
     .require('./pb-shooter/game.js', { expose: 'Game' })
     .require('./pb-shooter/gameState.js', { expose: 'GameState' })
+    .require('./pb-shooter/d3Utils.js', { expose: 'd3Utils' })
     .bundle()
     .pipe(source('game.js'))
     .pipe(gulp.dest('./public/tmp/js/'));

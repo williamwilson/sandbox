@@ -1,6 +1,7 @@
 (function(window) {
   var Game = require('Game');
   var GameState = require('GameState');
+  var d3Utils = require('d3Utils');
 
   GameState.spawnBug = function() { }
 
@@ -50,12 +51,8 @@
   }
 
   function updateOrigin() {
-    var origin = {
-      x: 400,
-      y: 250,
-      rotateX: 0,
-      rotateY: 0
-    };
+    var origin = { position: { x: 400, y: 250 } };
+
     field.selectAll('circle.origin').remove();
     var originSprite = field.selectAll('circle.origin').data([origin]);
     originSprite.enter().append('circle');
@@ -63,7 +60,7 @@
     originSprite
       .attr('class', 'origin')
       .attr('r', 20)
-      .attr('transform', function(d) { return buildTransformString(d.x, d.y, 0, d.rotateX, d.rotateY); });
+      .attr('transform', function(d) { return d3Utils.buildTransformString(d); });
   }
   updateOrigin();
 
@@ -78,10 +75,6 @@
       .attr('xlink:href', 'images/bug.png')
       .attr('height', 25)
       .attr('width', 25)
-      .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.drawOffset.x, d.drawOffset.y); });
-  }
-
-  function buildTransformString(x, y, angle, rotateX, rotateY) {
-    return "translate( " + x + "," + y + ") rotate(" + angle + " " + rotateX + " " + rotateY + ")";
+      .attr('transform', function(d) { return d3Utils.buildTransformString(d); });
   }
 })(window);
