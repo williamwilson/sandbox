@@ -28,6 +28,15 @@ var Vector = {
       pointB: pointB,
     };
 
+    if (pointA.x == pointB.x && pointA.y == pointB.y) {
+      dx = 0;
+      dy = 0;
+      vector.distance = 0;
+      vector.angle = 0;
+      vector.heading = {x: 0.5, y: 0.5};
+      return vector;
+    }
+
     var dx = pointA.x - pointB.x;
     var dy = pointA.y - pointB.y;
     vector.distance = Math.sqrt((dx*dx) + (dy*dy));

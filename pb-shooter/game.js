@@ -6,6 +6,7 @@ var Game = augment(Object, function() {
     this.time = 0;
     this.state = new GameState();
     this.states = [this.state];
+    this.players = {};
     
     this.delay = 5;
   };
@@ -31,6 +32,20 @@ var Game = augment(Object, function() {
     while(this.state.time < this.time) {
       this.state = this.state.tick();
       this.states.push(this.state);
+    }
+  };
+  this.addPlayer = function(player) {
+    this.players[player.id] = player;
+    player.position = { x: 100, y: 100 };
+    this.state.addPlayer(player);
+  };
+  this.updatePlayer = function(player) {
+    this.players[player.id] = player;
+    this.state.updatePlayer(player);
+  };
+  this.playerClick = function(id, position) {
+    if (!this.players[id]) {
+      this.addPlayer({id: id, position: position});
     }
   }
 });

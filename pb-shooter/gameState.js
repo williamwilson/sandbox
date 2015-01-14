@@ -4,14 +4,16 @@ var
   Vector = geometry.Vector,
   augment = require('augment'),
   Bug = require('./bug.js'),
-  extend = require('extend');
+  extend = require('extend'),
+  Player = require('./player.js');
 
 var GameState = augment(Object, function() {
   this.constructor = function(data) {
     var self = this;
 
     this.bugs = [];
-    this.bugCooldown = 1000;
+    this.bugCooldown = 63;
+    this.players = [];
     this.time = 0;
     this.fromData(data);
     this.map = new Map(800, 500);
@@ -21,7 +23,40 @@ var GameState = augment(Object, function() {
   };
   this._tick = function() {
     this.time++;
-    this.bugCooldown -= 16;
+    this.updateBugs();
+    this.updatePlayers();
+    return this;
+  };
+  this.addPlayer = function(player) {
+    this.players.push(player);
+  };
+  this.updatePlayer = function(player) {
+    for(var i = 0; i < this.players.length; i++) {
+      if (this.players[i].id === player.id) {
+        this.players[i].inputs = player.inputs;
+      }
+    }
+  };
+  this.updatePlayers = function() {
+    for(var i = 0; i < this.players.length; i++) {
+      var player = this.players[i];
+      var inputs = player.inputs;
+      var id = player.id;
+
+      if (!(player instanceof Player)) {
+        player = new Player(player.position, player.vector);
+        player.id = id;
+        player.inputs = inputs;
+        this.players[i] = player;
+      }
+
+      if (inputs && inputs.mouse) {
+        player.move(inputs.mouse);
+      }
+    }
+  };
+  this.updateBugs = function() {
+    this.bugCooldown -= 1;
 
     if (this.bugs.length < 10)
       this.spawnBug();
@@ -40,8 +75,6 @@ var GameState = augment(Object, function() {
         i--;
       }
     }
-
-    return this;
   };
   this.tick = function() {
     return new GameState(this.toData())._tick();
@@ -53,7 +86,8 @@ var GameState = augment(Object, function() {
     return { 
       time: this.time,
       bugs: this.bugs,
-      bugCooldown: this.bugCooldown
+      bugCooldown: this.bugCooldown,
+      players: this.players
     };
   };
 });
@@ -73,7 +107,7 @@ GameState.spawnBug = function() {
   if (this.bugCooldown > 0)
     return;
 
-  this.bugCooldown = 1000;
+  this.bugCooldown = 63;
     
   var target = this.map.getRandomPoint();
   var center = this.map.center();

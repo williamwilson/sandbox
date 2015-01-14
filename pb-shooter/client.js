@@ -24,6 +24,12 @@
     }
   });
 
+  $('svg').click(function(e) {
+    var posX = e.pageX - $(this).position().left,
+        posY = e.pageY - $(this).position().top;
+    io.emit('click', {x: posX, y: posY});
+  });
+
   window.setInterval(function() {
     if (lastSyncedState == latestServerState)
       return;
@@ -49,6 +55,20 @@
       
     updateBugs(gameState.bugs);
   }
+
+  function updateJoin() {
+    var join = { position: { x: 100, y: 100 } };
+    field.selectAll('circle.join').remove();
+    var joinSprite = field.selectAll('circle.join').data([join]);
+    joinSprite.enter().append('circle');
+
+    joinSprite
+      .attr('class', 'join')
+      .attr('r', 10)
+      .attr('fill', 'green')
+      .attr('transform', function(d) { return d3Utils.buildTransformString(d); });
+  }
+  updateJoin();
 
   function updateOrigin() {
     var origin = { position: { x: 400, y: 250 } };

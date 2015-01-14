@@ -31,7 +31,8 @@
     "gulp-jasmine": "^1.0.1",
     "jasmine": "^2.1.1",
     "gulp": "^3.8.10",
-    "extend": "^2.0.0"
+    "extend": "^2.0.0",
+    "d3": "^3.5.3"
   },
   "devDependencies": {
     "jasmine-core": "^2.1.3"

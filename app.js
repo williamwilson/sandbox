@@ -81,8 +81,8 @@ pushTimer.setInterval(function() {
 sio.on('connection', function(socket) {
   var user = socket.request.user;
   sockets.push(socket);
-  
-  socket.on('inputs', function(inputs) {
-    game.setInputs(socket.id, inputs);
+
+  socket.on('click', function(position) {
+    game.playerClick(socket.id, position);
   });
 });
