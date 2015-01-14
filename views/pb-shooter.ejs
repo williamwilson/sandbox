@@ -12,102 +12,17 @@
   </style>
 </head>
 
-<body>
+<body>  
+  <div id="screen" style="width: 800px; height: 500px; border: 1px solid black; margin-top: 10px; margin-left: 10px;">
+  </div>
+
+
   <script type="text/javascript" src="js\vendor\jquery-1.11.1.min.js"></script>
   <script type="text/javascript" src="js\vendor\knockout-3.2.0.js"></script>
   <script type="text/javascript" src="js\vendor\jquery.form.min.js"></script>
   <script type="text/javascript" src="js\vendor\d3.v3.min.js" charset="utf-8"></script>
   <script type="text/javascript" src="js\game.js"></script>
   <script src="/socket.io/socket.io.js"></script>
-  
-  <div id="screen" style="width: 800px; height: 500px; border: 1px solid black; margin-top: 10px; margin-left: 10px;">
-  </div>
-  
-  <script>
-    $(function() {
-      var Game = require('Game');
-      var GameState = require('GameState');
-      GameState.spawnBug = function() {
-        console.log('spawned a bug but not really, lol');
-      }
-
-      var io = window.io.connect(window.location.origin, { transports: ['websocket']});
-      var game = new Game();
-      var started = false;
-      var field = d3.select('#screen').append('svg');
-      var latestServerState;
-      var newServerState = false;
-      var lastRenderedTime = 0;
-      window.ticks = 0;
-      window.renderedFrames = 0;
-    
-      io.on('tick', function(gameState) {
-        if (!started) {
-          latestServerState = gameState;
-          start(gameState);
-          return;
-        }
-        
-        if (gameState.time > latestServerState.time) {
-          newServerState = true;
-          latestServerState = gameState;
-        }
-      });
-
-      function start(gameState) {
-        started = true;
-        console.log('setting game time to ', gameState.time);
-        game.time = gameState.time;
-        
-        window.setInterval(function() {
-          if (newServerState) {
-            newServerState = false;
-            game.sync(latestServerState);
-          }
-          ticks++;
-          game.tick();
-        }, 16);
-        
-        function frame() {
-          renderedFrames++;
-            
-          if (game.state.time >= lastRenderedTime) {
-            lastRenderedTime = game.state.time;
-            render(game.state);
-          }
-          
-          requestAnimationFrame(frame);
-        }
-        requestAnimationFrame(frame);
-      }
-
-      function render(gameState) {
-        if (!gameState)
-          return;
-          
-        updateBugs(gameState.bugs);
-      }
-
-      function updateBugs(bugs) {
-        field.selectAll('image.bug').remove();
-        var bugSprites = field.selectAll('image.bug').data(bugs);
-        bugSprites.enter()
-          .append('image');
-        
-        bugSprites
-          .attr('class', 'bug')
-          .attr('xlink:href', 'images/bug.png')
-          .attr('height', 25)
-          .attr('width', 25)
-          .attr('transform', function(d) { return buildTransformString(d.position.x - d.drawOffset.x, d.position.y - d.drawOffset.y, d.angle, d.drawOffset.x, d.drawOffset.y); });
-      }
-
-      function buildTransformString(x, y, angle, rotateX, rotateY) {
-        return "translate( " + x + "," + y + ") rotate(" + angle + " " + rotateX + " " + rotateY + ")";
-      }
-
-      window.game = game;
-    });
-  </script>
+  <script type="text/javascript" src="js\pb-shooter\client.js"></script>
 </body>
 </html>

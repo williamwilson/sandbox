@@ -5,7 +5,7 @@ var gulp = require('gulp'),
   jasmine = require('gulp-jasmine');
 
 var node;
-var client = ['./public/css/*.*', './public/js/*.*', './pb-shooter/*.js'];
+var client = ['./public/css/*.*', './public/js/*.*', './pb-shooter/client.js', './pb-shooter/*.js'];
 var server = ['./app.js', './pb-shooter/*.js'];
 var tests = ['./pb-shooter/tests/*.js'];
 var test = server.concat(tests);
@@ -25,13 +25,13 @@ gulp.task('pipeline', function() {
   gulp.src('./public/js/*.*').pipe(gulp.dest('./public/tmp/js'));
   gulp.src('./public/js/vendor/*.*').pipe(gulp.dest('./public/tmp/js/vendor'));
   gulp.src('./public/css/*.*').pipe(gulp.dest('./public/tmp/css'));
+  gulp.src('./pb-shooter/client.js').pipe(gulp.dest('./public/tmp/js/pb-shooter'));
 });
 
 gulp.task('browserify', function() {
   return browserify('./pb-shooter/game.js', { detectGlobals: false })
     .require('./pb-shooter/game.js', { expose: 'Game' })
     .require('./pb-shooter/gameState.js', { expose: 'GameState' })
-    .require('./pb-shooter/geometry.js', { expose: 'Geometry' })
     .bundle()
     .pipe(source('game.js'))
     .pipe(gulp.dest('./public/tmp/js/'));

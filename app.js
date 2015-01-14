@@ -15,6 +15,7 @@ var express = require('express'),
     Game = require('./pb-shooter/game.js');
 
 app.use(express.static(__dirname + '/public/tmp'));
+app.use("/images/", express.static(__dirname + '/public/images'));
 app.set('views', __dirname + '/views');
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'ejs');
@@ -29,6 +30,7 @@ passport.serializeUser(Users.serialize);
 passport.deserializeUser(Users.deserialize);
 passport.use(require('./auth/local.js'));
 
+process.env.PORT = 1337;
 var server = require('http').createServer(app).listen(process.env.PORT, function() {
   console.log('App running at http://%s:%s', server.address().address, server.address().port);
 });
