@@ -178,4 +178,40 @@ describe("Game", function() {
     expect(game.players['123ABC']).toBe(undefined, 'Should not have added a player');
     expect(game.state.players.length).toBe(0, 'Should not have added a player');
   });
+  it("should decrement a new player's laser cooldown", function() {
+    var game = new Game();
+    for(var i = 0; i < 100; i++) {
+      game.tick();
+    }
+
+    game.playerClick('123ABC', {x: 100, y: 100});
+    expect(game.state.players[0].laserCooldown).toBe(30);
+
+    game.tick();
+    expect(game.state.players[0].laserCooldown).toBe(29, "should have decremented the player's laser cooldown");
+  });
+  it("should not fire a laser when a player's laser cooldown is up and mouse is not down", function() {
+    var game = new Game();
+    for(var i = 0; i < 100; i++) {
+      game.tick();
+    }
+
+    game.playerClick('123ABC', {x: 100, y:100 });
+    game.updatePlayer({id: '123ABC', inputs: { mouse: {x: 100, y:100 }} });
+    expect(game.state.lasers.length).toBe(0, 'Should not have fired a laser');
+  });
+  it("should fire a laser when a player's laser cooldown is up and mouse is down", function() {
+    var game = new Game();
+    for(var i = 0; i < 100; i++) {
+      game.tick();
+    }
+
+    game.playerClick('123ABC', {x: 100, y: 100 });
+    game.updatePlayer({id: '123ABC', inputs: { mouse: {x: 100, y:100, leftDown: true}} });
+    game.state.players[0].laserCooldown = 0;
+    game.tick();
+
+    expect(game.state.lasers.length).toBe(1, 'Should have spawned a laser');
+    expect(game.state.players[0].laserCooldown).toBe(30, "Should have reset player's laser cooldown");
+  });
 }); 

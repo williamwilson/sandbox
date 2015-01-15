@@ -5,7 +5,8 @@ var
   augment = require('augment'),
   Bug = require('./bug.js'),
   extend = require('extend'),
-  Player = require('./player.js');
+  Player = require('./player.js'),
+  Laser = require('./laser.js');
 
 var GameState = augment(Object, function() {
   this.constructor = function(data) {
@@ -14,6 +15,7 @@ var GameState = augment(Object, function() {
     this.bugs = [];
     this.bugCooldown = 63;
     this.players = [];
+    this.lasers = [];
     this.time = 0;
     this.fromData(data);
     this.map = new Map(800, 500);
@@ -25,6 +27,7 @@ var GameState = augment(Object, function() {
     this.time++;
     this.updateBugs();
     this.updatePlayers();
+    this.updateLasers();
     return this;
   };
   this.addPlayer = function(player) {
@@ -42,16 +45,49 @@ var GameState = augment(Object, function() {
       var player = this.players[i];
       var inputs = player.inputs;
       var id = player.id;
+      var laserCooldown = player.laserCooldown;
 
       if (!(player instanceof Player)) {
         player = new Player(player.position, player.vector);
         player.id = id;
         player.inputs = inputs;
+        player.laserCooldown = laserCooldown;
         this.players[i] = player;
+      }
+
+      if (laserCooldown > 0)
+        player.laserCooldown--;
+      else {
+        if (inputs && inputs.mouse.leftDown) {
+          player.laserCooldown = 30;
+          this.spawnLaser(
+            {x: player.position.x, y: player.position.y},
+            {x: player.position.x - player.heading.x, y: player.position.y - player.heading.y }
+          );
+        }
       }
 
       if (inputs && inputs.mouse) {
         player.move(inputs.mouse);
+      }
+    }
+  };
+  this.spawnLaser = function(origin, target) {
+    this.lasers.push(new Laser(origin, target));
+  };
+  this.updateLasers = function() {
+    for(var i = 0; i < this.lasers.length; i++) {
+      var laser = this.lasers[i];
+
+      if (!(laser instanceof Laser)) {
+        laser = new Laser(laser.position, { x: laser.position.x + laser.heading.x, y: laser.position.y + laser.heading.y });
+        this.lasers[i] = laser;
+      }
+
+      laser.move();
+      if (this.map.pointOffMap(laser.position)) {
+        this.lasers.splice(i, 1);
+        i--;
       }
     }
   };
@@ -87,7 +123,8 @@ var GameState = augment(Object, function() {
       time: this.time,
       bugs: this.bugs,
       bugCooldown: this.bugCooldown,
-      players: this.players
+      players: this.players,
+      lasers: this.lasers
     };
   };
 });

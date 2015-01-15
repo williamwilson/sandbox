@@ -88,4 +88,25 @@ describe("GameState", function() {
     }
     expect(state.bugCooldown).toBe(63);
   });
+  it("should decrement a player's laser cooldown", function() {
+    var state = new GameState();
+    state.addPlayer({id: 123, position: {x: 100, y:100 }, laserCooldown: 30});
+    state = state.tick();
+    expect(state.players[0].laserCooldown).toBe(29, "Should have decremented the player's laser cooldown");
+  });
+  it("should not spawn a laser when a player's laser cooldown is up but mouse is not down", function() {
+    var state = new GameState();
+    state.addPlayer({id: 123, position: {x: 100, y:100 }, laserCooldown: 0});
+    state.updatePlayer({id: 123, inputs: {mouse: {x: 200, y:200 }}});
+    state = state.tick();
+    expect(state.lasers.length).toBe(0, 'Should not have spawned a laser');
+  });
+  it("should move a laser towards its target", function() {
+    var state = new GameState();
+    state.spawnLaser({x: 100, y: 100}, {x: 200, y:200});
+    state = state.tick();
+    expect(state.lasers.length).toBe(1, 'Should have kept laser');
+    expect(Math.floor(state.lasers[0].position.x)).toBe(107, 'Should have moved laser towards its target');
+    expect(Math.floor(state.lasers[0].position.y)).toBe(107, 'Should have moved laser towards its target');
+  });
 });

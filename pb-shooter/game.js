@@ -37,6 +37,7 @@ var Game = augment(Object, function() {
   this.addPlayer = function(player) {
     this.players[player.id] = player;
     player.position = { x: 100, y: 100 };
+    player.laserCooldown = 30;
     this.state.addPlayer(player);
   };
   this.updatePlayer = function(player) {

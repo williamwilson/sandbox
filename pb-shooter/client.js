@@ -14,13 +14,24 @@
   var latestServerState, lastSyncedState, thisPlayerId, lastSentInputs;
   var lastRenderedTime = 0;
 
-  var inputs = { };
+  var inputs = { mouse: { } };
+
+  $('svg').mousedown(function(e) {
+    inputs.mouse.leftDown = true;
+    return true;
+  });
+
+  $('svg').mouseup(function(e) {
+    inputs.mouse.leftDown = false;
+    return true;
+  });
 
   $('svg').mousemove(function(e) {
     var posX = e.pageX - $(this).position().left,
         posY = e.pageY - $(this).position().top;
 
-    inputs.mouse = { x: posX, y: posY }
+    inputs.mouse.x = posX;
+    inputs.mouse.y = posY;
   });
 
   io.on('tick', function(gameState, playerId) {
@@ -53,14 +64,18 @@
   }, 16);
   
   function sendInputs() {
-    if (lastSentInputs && inputs.mouse.x == lastSentInputs.mouse.x && inputs.mouse.y == lastSentInputs.mouse.y)
+    if (lastSentInputs && 
+       inputs.mouse.x == lastSentInputs.mouse.x && 
+       inputs.mouse.y == lastSentInputs.mouse.y &&
+       inputs.mouse.leftDown == lastSentInputs.mouse.leftDown)
       return;
 
     io.emit('inputs', { time: game.time, inputs: inputs });
     lastSentInputs = {
       mouse: {
         x: inputs.mouse.x,
-        y: inputs.mouse.y
+        y: inputs.mouse.y,
+        leftDown: inputs.mouse.leftDown
       }
     };
   }
@@ -81,6 +96,20 @@
       
     updateBugs(gameState.bugs);
     updatePlayers(gameState.players);
+    updateLasers(gameState.lasers);
+  }
+
+  function updateLasers(lasers) {
+    field.selectAll('rect.laser').remove();
+    var laserSprites = field.selectAll('rect.laser').data(lasers);
+    laserSprites.enter().append('rect');
+
+    laserSprites
+      .attr('class', 'laser')
+      .attr('fill', 'black')
+      .attr('height', 2)
+      .attr('width', 12)
+      .attr('transform', function(d) { return d3Utils.buildTransformString(d); });
   }
 
   function updatePlayers(players) {
