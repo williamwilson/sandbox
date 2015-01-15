@@ -6,7 +6,9 @@ require = function(module) {
 
 var 
   Game = require('../game.js'),
-  GameState = require('../gameState.js');
+  GameState = require('../gameState.js'),
+  Vector = require('../geometry.js').Vector,
+  Bug = require('../bug.js');
 
 describe("Game", function() {
   it("should start at time 0", function() {
@@ -202,9 +204,6 @@ describe("Game", function() {
   });
   it("should fire a laser when a player's laser cooldown is up and mouse is down", function() {
     var game = new Game();
-    for(var i = 0; i < 100; i++) {
-      game.tick();
-    }
 
     game.playerClick('123ABC', {x: 100, y: 100 });
     game.updatePlayer({id: '123ABC', inputs: { mouse: {x: 100, y:100, leftDown: true}} });
@@ -213,5 +212,48 @@ describe("Game", function() {
 
     expect(game.state.lasers.length).toBe(1, 'Should have spawned a laser');
     expect(game.state.players[0].laserCooldown).toBe(30, "Should have reset player's laser cooldown");
+  });
+  it("should detect a collision between a laser and a bug", function() {
+    var game = new Game();
+    var oldSpawnBug = GameState.spawnBug;
+    var bugSpawned = false;
+
+    GameState.spawnBug = function() {
+      if (bugSpawned)
+        return;
+
+      bugSpawned = true;
+
+      var target = {x: 200, y: 200};
+      var origin = {x: 150, y: 150};
+      var vector = Vector.fromPoints(origin, target);
+
+      var bug = new Bug(origin, vector);
+      this.bugs.push(bug);
+    };
+
+    try {
+      game.playerClick('123ABC', {x: 100, y: 100 });
+      game.updatePlayer({id: '123ABC', inputs: { mouse: {x: 200, y: 200, leftDown: true}} });
+      game.tick();
+      game.state.players[0].laserCooldown = 0;
+
+      for(var i = 0; i < 6; i++) {
+        game.tick();
+      }
+
+      game.tick();
+
+      expect(game.state.lasers.length).toBe(0, 'Should have removed the collided laser');
+      expect(game.state.bugs.length).toBe(0, 'Should have removed the collided bug');
+      expect(game.state.explosions.length).toBe(1, 'Should have added an explosion');
+
+      game.tick();
+      expect(game.state.explosions.length).toBe(1, 'Should have kept the explosion');
+      expect(game.state.explosions[0].lifespan).toBe(39, "Should have ticked down the explosion's lifespan");
+    }
+    finally {
+      GameState.spawnBug = oldSpawnBug;
+    }
   });
 }); 

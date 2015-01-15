@@ -97,6 +97,21 @@
     updateBugs(gameState.bugs);
     updatePlayers(gameState.players);
     updateLasers(gameState.lasers);
+    updateExplosions(gameState.explosions);
+  }
+
+  function updateExplosions(explosions) {
+    field.selectAll('image.explosion').remove();
+    var explosionSprites = field.selectAll('image.explosion').data(explosions);
+    explosionSprites.enter().append('image');
+
+    explosionSprites
+      .attr('class', 'explosion')
+      .attr('xlink:href', 'images/boom.png')
+      .attr('height', 25)
+      .attr('width', 25)
+      .attr('transform', function(d) { return d3Utils.buildTransformString(d); })
+      .attr('opacity', function(d) { return d.lifespan / 40; });
   }
 
   function updateLasers(lasers) {

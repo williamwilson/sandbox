@@ -6,7 +6,9 @@ var
   Bug = require('./bug.js'),
   extend = require('extend'),
   Player = require('./player.js'),
-  Laser = require('./laser.js');
+  Laser = require('./laser.js'),
+  SAT = require('sat'),
+  Explosion = require('./explosion.js');
 
 var GameState = augment(Object, function() {
   this.constructor = function(data) {
@@ -16,6 +18,7 @@ var GameState = augment(Object, function() {
     this.bugCooldown = 63;
     this.players = [];
     this.lasers = [];
+    this.explosions = [];
     this.time = 0;
     this.fromData(data);
     this.map = new Map(800, 500);
@@ -28,6 +31,8 @@ var GameState = augment(Object, function() {
     this.updateBugs();
     this.updatePlayers();
     this.updateLasers();
+    this.updateExplosions();
+    this.checkCollisions();
     return this;
   };
   this.addPlayer = function(player) {
@@ -39,6 +44,46 @@ var GameState = augment(Object, function() {
         this.players[i].inputs = player.inputs;
       }
     }
+  };
+  this.updateExplosions = function() {
+    for(var i = 0; i < this.explosions.length; i++) {
+      var explosion = this.explosions[i];
+      var lifespan = explosion.lifespan;
+
+      if (!(explosion instanceof Explosion)) {
+        explosion = new Explosion(explosion.position);
+        explosion.lifespan = lifespan;
+        this.explosions[i] = explosion;
+      }
+      explosion.move();
+
+      if (explosion.lifespan <= 0) {
+        this.explosions.splice(i, 1); i--;
+      }
+    }
+  };
+  this.checkCollisions = function() {
+    for(var i = 0; i < this.lasers.length; i++) {
+      var laser = this.lasers[i];
+      for (var j = 0; j < this.bugs.length; j++) {
+        var bug = this.bugs[j];
+
+        var collision = this.checkCollision(laser, bug);
+        if (collision.collided) {
+          this.lasers.splice(i, 1); i--;
+          this.bugs.splice(j, 1); j--;
+          this.explosions.push(new Explosion(bug.position, bug.vector));
+        }
+      }
+    }
+  };
+  this.checkCollision = function(unit1, unit2) {
+    var response = new SAT.Response();
+    var collided = SAT.testPolygonCircle(unit1.hitBox(), unit2.hitBox(), response);
+    return {
+      collided: collided,
+      response: response
+    };
   };
   this.updatePlayers = function() {
     for(var i = 0; i < this.players.length; i++) {
@@ -124,7 +169,8 @@ var GameState = augment(Object, function() {
       bugs: this.bugs,
       bugCooldown: this.bugCooldown,
       players: this.players,
-      lasers: this.lasers
+      lasers: this.lasers,
+      explosions: this.explosions
     };
   };
 });

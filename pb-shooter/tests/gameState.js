@@ -4,7 +4,9 @@ require = function(module) {
   return originalRequire(module);
 }
 
-var GameState = require('../gameState.js');
+var GameState = require('../gameState.js'),
+  Vector = require('../geometry.js').Vector,
+  Bug = require('../bug.js');
 
 describe("GameState", function() {
   it("constructor should produce a valid GameState", function() { 
@@ -108,5 +110,43 @@ describe("GameState", function() {
     expect(state.lasers.length).toBe(1, 'Should have kept laser');
     expect(Math.floor(state.lasers[0].position.x)).toBe(107, 'Should have moved laser towards its target');
     expect(Math.floor(state.lasers[0].position.y)).toBe(107, 'Should have moved laser towards its target');
+  });
+  it("should detect a collision between a laser and a bug", function() {
+    var oldSpawnBug = GameState.spawnBug;
+    var bugSpawned = false;
+
+    GameState.spawnBug = function() {
+      if (bugSpawned)
+        return;
+
+      bugSpawned = true;
+
+      var target = {x: 200, y: 200};
+      var origin = {x: 150, y: 150};
+      var vector = Vector.fromPoints(origin, target);
+
+      var bug = new Bug(origin, vector);
+      this.bugs.push(bug);
+    };
+
+    try {
+      var state = new GameState();
+      state.addPlayer({id: 123, position: {x: 100, y: 100 }, laserCooldown: 1});
+      state.updatePlayer({id: 123, inputs: { mouse: { x: 200, y: 200, leftDown: true }}});
+      for(var i = 0; i < 8; i++) {
+        state = state.tick();        
+      }
+
+      expect(state.lasers.length).toBe(0, 'Should have removed the collided laser');
+      expect(state.bugs.length).toBe(0, 'Should have removed the collided bug');
+      expect(state.explosions.length).toBe(1, 'Should have added an explosion');
+
+      state = state.tick();
+      expect(state.explosions.length).toBe(1, 'Should have kept the explosion');
+      expect(state.explosions[0].lifespan).toBe(39, "Should have ticked down the explosion's lifespan");
+    }
+    finally {
+      GameState.spawnBug = oldSpawnBug;
+    }
   });
 });
