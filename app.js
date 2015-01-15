@@ -74,7 +74,7 @@ gameTimer.setInterval(function() {
 var pushTimer = new Nanotimer();
 pushTimer.setInterval(function() {
   for(var i = 0; i < sockets.length; i++) {
-    sockets[i].emit('tick', game.clientState);
+    sockets[i].emit('tick', game.clientState, sockets[i].id);
   }
 }, this, '16m');
 
@@ -84,5 +84,9 @@ sio.on('connection', function(socket) {
 
   socket.on('click', function(position) {
     game.playerClick(socket.id, position);
+  });
+
+  socket.on('inputs', function(data) { 
+    game.updatePlayer({ id: socket.id, inputs: { mouse: data.inputs.mouse }});
   });
 });

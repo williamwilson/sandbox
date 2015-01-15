@@ -11,10 +11,21 @@
   window.game = game;
 
   var field = d3.select('#screen').append('svg');
-  var latestServerState, lastSyncedState;
+  var latestServerState, lastSyncedState, thisPlayerId, lastSentInputs;
   var lastRenderedTime = 0;
 
-  io.on('tick', function(gameState) {
+  var inputs = { };
+
+  $('svg').mousemove(function(e) {
+    var posX = e.pageX - $(this).position().left,
+        posY = e.pageY - $(this).position().top;
+
+    inputs.mouse = { x: posX, y: posY }
+  });
+
+  io.on('tick', function(gameState, playerId) {
+    thisPlayerId = playerId;
+
     if (!latestServerState)
       latestServerState = gameState;
 
@@ -36,9 +47,24 @@
 
     game.sync(latestServerState);
     lastSyncedState = latestServerState;
+    game.updatePlayer({ id: thisPlayerId, inputs: inputs });
     game.tick();
+    sendInputs();
   }, 16);
   
+  function sendInputs() {
+    if (lastSentInputs && inputs.mouse.x == lastSentInputs.mouse.x && inputs.mouse.y == lastSentInputs.mouse.y)
+      return;
+
+    io.emit('inputs', { time: game.time, inputs: inputs });
+    lastSentInputs = {
+      mouse: {
+        x: inputs.mouse.x,
+        y: inputs.mouse.y
+      }
+    };
+  }
+
   function frame() {        
     if (game.state.time >= lastRenderedTime) {
       lastRenderedTime = game.state.time;
@@ -54,6 +80,20 @@
       return;
       
     updateBugs(gameState.bugs);
+    updatePlayers(gameState.players);
+  }
+
+  function updatePlayers(players) {
+    field.selectAll('image.player').remove();
+    var playerSprites = field.selectAll('image.player').data(players);
+    playerSprites.enter().append('image');
+
+    playerSprites
+      .attr('class', 'player')
+      .attr('xlink:href', 'images/babyjoel.png')
+      .attr('height', 25)
+      .attr('width', 25)
+      .attr('transform', function(d) { return d3Utils.buildTransformString(d); });
   }
 
   function updateJoin() {

@@ -40,6 +40,9 @@ var Game = augment(Object, function() {
     this.state.addPlayer(player);
   };
   this.updatePlayer = function(player) {
+    if (!this.players[player.id])
+      return;
+
     this.players[player.id] = player;
     this.state.updatePlayer(player);
   };

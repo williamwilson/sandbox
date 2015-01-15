@@ -134,6 +134,8 @@ describe("Game", function() {
     game.tick();
     expect(Math.floor(game.state.players[0].position.x)).toBe(104, 'Should have moved player towards his mouse input');
     expect(Math.floor(game.state.players[0].position.y)).toBe(104, 'Should have moved player towards his mouse input');
+    
+    game.updatePlayer(player);    
     game.tick();
     expect(Math.floor(game.state.players[0].position.x)).toBe(108, 'Should have moved player towards his mouse input');
     expect(Math.floor(game.state.players[0].position.y)).toBe(108, 'Should have moved player towards his mouse input');
@@ -165,5 +167,15 @@ describe("Game", function() {
     expect(game.state.players.length).toBe(1, 'Should not have added a second player');
     expect(game.state.players[0].position.x).toBe(100, 'Should not have moved player');
     expect(game.state.players[0].position.y).toBe(100, 'Should not have moved player');
+  });
+  it("should not add a new player on an updatePlayer tick", function() {
+    var game = new Game();
+    for(var i = 0; i < 100; i++) {
+      game.tick();
+    }
+
+    game.updatePlayer({id: '123ABC', inputs: { mouse:  {x: 100, y:100 }}});
+    expect(game.players['123ABC']).toBe(undefined, 'Should not have added a player');
+    expect(game.state.players.length).toBe(0, 'Should not have added a player');
   });
 }); 
