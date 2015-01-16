@@ -80,8 +80,8 @@ describe("GameState", function() {
     state.updatePlayer({id: 123, inputs: {mouse: {x: 200, y: 200 }}});
     state = state.tick();
     
-    expect(Math.floor(state.players[0].position.x)).toBe(104, 'Should have moved player towards target');
-    expect(Math.floor(state.players[0].position.y)).toBe(104, 'Should have moved player towards target');
+    expect(Math.floor(state.players[0].position.x)).toBe(102, 'Should have moved player towards target');
+    expect(Math.floor(state.players[0].position.y)).toBe(102, 'Should have moved player towards target');
   });
   it("should reset the bug cooldown after spawning a bug", function() {
     var state = new GameState();
@@ -133,7 +133,45 @@ describe("GameState", function() {
       var state = new GameState();
       state.addPlayer({id: 123, position: {x: 100, y: 100 }, laserCooldown: 1});
       state.updatePlayer({id: 123, inputs: { mouse: { x: 200, y: 200, leftDown: true }}});
-      for(var i = 0; i < 8; i++) {
+      for(var i = 0; i < 9; i++) {
+        state = state.tick();        
+      }
+
+      expect(state.lasers.length).toBe(0, 'Should have removed the collided laser');
+      expect(state.bugs.length).toBe(0, 'Should have removed the collided bug');
+      expect(state.explosions.length).toBe(1, 'Should have added an explosion');
+
+      state = state.tick();
+      expect(state.explosions.length).toBe(1, 'Should have kept the explosion');
+      expect(state.explosions[0].lifespan).toBe(39, "Should have ticked down the explosion's lifespan");
+    }
+    finally {
+      GameState.spawnBug = oldSpawnBug;
+    }
+  });
+  it("should detect a collision between a player and a bug", function() {
+    var oldSpawnBug = GameState.spawnBug;
+    var bugSpawned = false;
+
+    GameState.spawnBug = function() {
+      if (bugSpawned)
+        return;
+
+      bugSpawned = true;
+
+      var target = {x: 100, y: 100};
+      var origin = {x: 75, y: 75};
+      var vector = Vector.fromPoints(origin, target);
+
+      var bug = new Bug(origin, vector);
+      this.bugs.push(bug);
+    };
+
+    try {
+      var state = new GameState();
+      state.addPlayer({id: 123, position: {x: 100, y: 100 } });
+      state.updatePlayer({id: 123, inputs: { mouse: { x: 100, y: 100 }}});
+      for(var i = 0; i < 4; i++) {
         state = state.tick();        
       }
 

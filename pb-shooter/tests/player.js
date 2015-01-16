@@ -14,7 +14,7 @@ describe("Player", function() {
   it("should move a player with no inputs", function() {
     var player = new Player({x: 100, y: 100});
     player.move({x: 200, y: 200});
-    expect(Math.floor(player.position.x)).toBe(104);
-    expect(Math.floor(player.position.y)).toBe(104);
+    expect(Math.floor(player.position.x)).toBe(102);
+    expect(Math.floor(player.position.y)).toBe(102);
   });
 });

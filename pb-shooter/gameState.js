@@ -76,6 +76,20 @@ var GameState = augment(Object, function() {
         }
       }
     }
+
+    for(var i = 0; i < this.players.length; i++) {
+      var player = this.players[i];
+      for(var j = 0; j < this.bugs.length; j++) {
+        var bug = this.bugs[j];
+
+        var collision = this.checkCollision(player, bug);
+        if (collision.collided) {
+          this.players.splice(i, 1); i--;
+          this.bugs.splice(j, 1); j--;
+          this.explosions.push(new Explosion(bug.position, bug.vector));
+        }
+      }
+    }
   };
   this.checkCollision = function(unit1, unit2) {
     var response = new SAT.Response();

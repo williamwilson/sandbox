@@ -134,13 +134,13 @@ describe("Game", function() {
     player.inputs = { mouse: { x: 200, y: 200 } };
     game.updatePlayer(player);
     game.tick();
-    expect(Math.floor(game.state.players[0].position.x)).toBe(104, 'Should have moved player towards his mouse input');
-    expect(Math.floor(game.state.players[0].position.y)).toBe(104, 'Should have moved player towards his mouse input');
+    expect(Math.floor(game.state.players[0].position.x)).toBe(102, 'Should have moved player towards his mouse input');
+    expect(Math.floor(game.state.players[0].position.y)).toBe(102, 'Should have moved player towards his mouse input');
     
     game.updatePlayer(player);    
     game.tick();
-    expect(Math.floor(game.state.players[0].position.x)).toBe(108, 'Should have moved player towards his mouse input');
-    expect(Math.floor(game.state.players[0].position.y)).toBe(108, 'Should have moved player towards his mouse input');
+    expect(Math.floor(game.state.players[0].position.x)).toBe(104, 'Should have moved player towards his mouse input');
+    expect(Math.floor(game.state.players[0].position.y)).toBe(104, 'Should have moved player towards his mouse input');
   });
   it("should add a player on click if he wasn't already there", function() {
     var game = new Game();
@@ -238,12 +238,11 @@ describe("Game", function() {
       game.tick();
       game.state.players[0].laserCooldown = 0;
 
-      for(var i = 0; i < 6; i++) {
+      for(var i = 0; i < 7; i++) {
         game.tick();
       }
 
       game.tick();
-
       expect(game.state.lasers.length).toBe(0, 'Should have removed the collided laser');
       expect(game.state.bugs.length).toBe(0, 'Should have removed the collided bug');
       expect(game.state.explosions.length).toBe(1, 'Should have added an explosion');
@@ -251,6 +250,43 @@ describe("Game", function() {
       game.tick();
       expect(game.state.explosions.length).toBe(1, 'Should have kept the explosion');
       expect(game.state.explosions[0].lifespan).toBe(39, "Should have ticked down the explosion's lifespan");
+    }
+    finally {
+      GameState.spawnBug = oldSpawnBug;
+    }
+  });
+  it("should detect a collision between a bug and a player", function() {
+    var game = new Game();
+    var oldSpawnBug = GameState.spawnBug;
+    var bugSpawned = false;
+
+    GameState.spawnBug = function() {
+      if (bugSpawned)
+        return;
+
+      bugSpawned = true;
+
+      var target = {x: 200, y: 200};
+      var origin = {x: 75, y: 75};
+      var vector = Vector.fromPoints(origin, target);
+
+      var bug = new Bug(origin, vector);
+      this.bugs.push(bug);
+    }
+
+    try {
+      game.playerClick('123ABC', {x: 100, y: 100});
+      game.updatePlayer({id: '123ABC', inputs: { mouse: {x: 100, y: 100}}});
+      
+      for(var i = 0; i < 18; i++) {
+        game.tick();
+      }
+
+      game.tick();
+
+      expect(game.state.players.length).toBe(0, 'Should have removed the collided player');
+      expect(game.state.bugs.length).toBe(0, 'Should have removed the collided bug');
+      expect(game.state.explosions.length).toBe(1, 'Should have added an explosion');
     }
     finally {
       GameState.spawnBug = oldSpawnBug;

@@ -12,7 +12,7 @@ var Player = augment(Unit, function(base) {
 
     base.constructor.call(this, position, vector);
     base.rectangle.call(this, 25, 25);
-    this.speed = 6;
+    this.speed = 3;
   };
   this.hitBox = function() {
     return base.rectangleHitBox.call(this);
