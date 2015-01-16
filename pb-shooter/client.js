@@ -53,7 +53,7 @@
   });
 
   io.on('getName', function() {
-    var name = window.prompt("First, what's your name?", "Joe Fabitz");
+    var name = window.prompt("First, what's your name?", "jfabitz");
     io.emit('join', name);
   });
 
@@ -138,6 +138,39 @@
       .attr('transform', function(d) { return d3Utils.buildTransformString(d); });
   }
 
+  var supportedNames = {
+    'azar': {},
+    'babyjoel': {},
+    'badjokeeel': {},
+    'beetus': {},
+    'bobby': {},
+    'boom': {},
+    'bug': {},
+    'chucknorris': {},
+    'doge': {},
+    'fatlee': {},
+    'fowlerd': {},
+    'froheard': {},
+    'havemercy': {},
+    'inappropriatemancini': {},
+    'jfabitz': {},
+    'kevin': {},
+    'legalandy': {},
+    'likeasir': {},
+    'liz': {},
+    'mondays': {},
+    'nickpoleon': {},
+    'ragedino': {},
+    'ragemike': {},
+    'saget': {},
+    'shadowkiska': {},
+    'slothpoleon': {},
+    'smugbill': {},
+    'thekidd': {},
+    'tinabrandon': {},
+    'youngtom': {},
+  };
+
   function updatePlayers(players) {
     field.selectAll('image.player').remove();
     var playerSprites = field.selectAll('image.player').data(players);
@@ -145,7 +178,10 @@
 
     playerSprites
       .attr('class', 'player')
-      .attr('xlink:href', 'images/babyjoel.png')
+      .attr('xlink:href', function(d) { 
+        var imageName = !!supportedNames[d.name] ? d.name : 'jfabitz';
+        return 'images/' + imageName + '.png'; 
+      })
       .attr('height', 25)
       .attr('width', 25)
       .attr('transform', function(d) { return d3Utils.buildTransformString(d); });

@@ -212,7 +212,7 @@ describe("GameState", function() {
     expect(state.players[0].id).toBe('456ABC', 'Should have destroyed player 1');
     expect(state.lasers.length).toBe(0, 'Should have removed the laser');
     expect(state.explosions.length).toBe(1, 'Should have created an explosion');
-    expect(log.length).toBe(1, 'Should have logged death by laser');
+    expect(log.length).toBe(2, 'Should have logged death by laser');
     expect(log[0]).toContain('Babyjoel killed Joe Fabitz with a goddamned laser!', 'Should have logged death by laser');
   });
 });

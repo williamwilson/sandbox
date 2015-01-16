@@ -83,7 +83,9 @@ var GameState = augment(Object, function() {
           this.bugs.splice(j, 1); j--;
           this.explosions.push(new Explosion(bug.position, bug.vector));
           
-          bus.log(this.getPlayerById(laser.playerId).name + ' killed a bug!');
+          var player = this.getPlayerById(laser.playerId);
+          player.score += 10;
+          bus.log(player.name + ' killed a bug! +10 points');
         }
       }
     }
@@ -98,7 +100,7 @@ var GameState = augment(Object, function() {
           this.players.splice(i, 1); i--;
           this.bugs.splice(j, 1); j--;
           this.explosions.push(new Explosion(bug.position, bug.vector));
-          bus.log(player.name + ' was killed by a bug!');
+          bus.log(player.name + ' was killed by a bug! Final score: ' + player.score);
         }
       }
     }
@@ -116,7 +118,11 @@ var GameState = augment(Object, function() {
             this.players.splice(i, 1); i--;
             this.lasers.splice(j, 1); j--;
             this.explosions.push(new Explosion(player.position, player.vector));
-            bus.log(this.getPlayerById(laser.playerId).name + ' killed ' + player.name + ' with a goddamned laser!');
+
+            var killingPlayer = this.getPlayerById(laser.playerId)
+            killingPlayer.score += 100;
+            bus.log(killingPlayer.name + ' killed ' + player.name + ' with a goddamned laser! +100 points');
+            bus.log(player.name + "'s final score was " + player.score);
           }
         }
       }
@@ -144,6 +150,7 @@ var GameState = augment(Object, function() {
       var inputs = player.inputs;
       var id = player.id;
       var name = player.name;
+      var score = player.score || 0;
       var laserCooldown = player.laserCooldown;
 
       if (!(player instanceof Player)) {
@@ -151,6 +158,7 @@ var GameState = augment(Object, function() {
         player.id = id;
         player.name = name;
         player.inputs = inputs;
+        player.score = score;
         player.laserCooldown = laserCooldown;
         this.players[i] = player;
       }
