@@ -8,7 +8,8 @@ var
   Player = require('./player.js'),
   Laser = require('./laser.js'),
   SAT = require('sat'),
-  Explosion = require('./explosion.js');
+  Explosion = require('./explosion.js'),
+  bus = require('./bus');
 
 var GameState = augment(Object, function() {
   this.constructor = function(data) {
@@ -73,6 +74,7 @@ var GameState = augment(Object, function() {
           this.lasers.splice(i, 1); i--;
           this.bugs.splice(j, 1); j--;
           this.explosions.push(new Explosion(bug.position, bug.vector));
+          bus.log(laser.playerId + ' killed a bug!');
         }
       }
     }
@@ -87,6 +89,7 @@ var GameState = augment(Object, function() {
           this.players.splice(i, 1); i--;
           this.bugs.splice(j, 1); j--;
           this.explosions.push(new Explosion(bug.position, bug.vector));
+          bus.log(player.id + ' was killed by a bug!');
         }
       }
     }
@@ -104,6 +107,7 @@ var GameState = augment(Object, function() {
             this.players.splice(i, 1); i--;
             this.lasers.splice(j, 1); j--;
             this.explosions.push(new Explosion(player.position, player.vector));
+            bus.log(laser.playerId + ' killed ' + player.id + ' with a goddamned laser!');
           }
         }
       }
@@ -166,7 +170,7 @@ var GameState = augment(Object, function() {
       var laser = this.lasers[i];
 
       if (!(laser instanceof Laser)) {
-        laser = new Laser(laser.position, { x: laser.position.x + laser.heading.x, y: laser.position.y + laser.heading.y });
+        laser = new Laser(laser.position, { x: laser.position.x + laser.heading.x, y: laser.position.y + laser.heading.y }, laser.playerId);
         this.lasers[i] = laser;
       }
 

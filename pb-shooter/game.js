@@ -1,14 +1,24 @@
 var GameState = require('./gameState.js'),
-    augment = require('augment');
+    augment = require('augment'),
+    bus = require('./bus.js');
 
 var Game = augment(Object, function() {
   this.constructor = function() {
     this.time = 0;
     this.state = new GameState();
     this.states = [this.state];
+    this.gameLog = [];
     this.players = {};
-    
     this.delay = 5;
+
+    var self = this;
+    bus.on('log', function(event) {
+      self.log(event);
+    });
+    bus.log('Game started!');
+  };
+  this.log = function(message) {
+    this.gameLog.push(message);
   };
   this.tick = function() {
     this.time += 1;
@@ -39,6 +49,7 @@ var Game = augment(Object, function() {
     player.position = { x: 100, y: 100 };
     player.laserCooldown = 30;
     this.state.addPlayer(player);
+    bus.log(player.id + ' joined!');
   };
   this.updatePlayer = function(player) {
     if (!this.players[player.id])

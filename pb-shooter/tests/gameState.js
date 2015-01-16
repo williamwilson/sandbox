@@ -6,7 +6,8 @@ require = function(module) {
 
 var GameState = require('../gameState.js'),
   Vector = require('../geometry.js').Vector,
-  Bug = require('../bug.js');
+  Bug = require('../bug.js'),
+  bus = require('../bus.js');
 
 describe("GameState", function() {
   it("constructor should produce a valid GameState", function() { 
@@ -198,6 +199,11 @@ describe("GameState", function() {
     state.updatePlayer({id: '456ABC', inputs: { mouse: {x: 200, y: 200, leftDown: true} }});
     state.players[1].laserCooldown = 1;
 
+    var log = [];
+    bus.on('log', function(message) {
+      log.push(message);
+    });
+
     for(var i = 0; i < 14; i++) {
       state = state.tick();
     }
@@ -206,5 +212,7 @@ describe("GameState", function() {
     expect(state.players[0].id).toBe('456ABC', 'Should have destroyed player 1');
     expect(state.lasers.length).toBe(0, 'Should have removed the laser');
     expect(state.explosions.length).toBe(1, 'Should have created an explosion');
+    expect(log.length).toBe(1, 'Should have logged death by laser');
+    expect(log[0]).toContain('456ABC killed 123ABC with a goddamned laser!', 'Should have logged death by laser');
   });
 });

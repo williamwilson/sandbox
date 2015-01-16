@@ -12,7 +12,8 @@ var express = require('express'),
     geometry = require('./pb-shooter/geometry.js'),
     Map = geometry.Map,
     Nanotimer = require('nanotimer'),
-    Game = require('./pb-shooter/game.js');
+    Game = require('./pb-shooter/game.js'),
+    bus = require('./pb-shooter/bus.js');
 
 app.use(express.static(__dirname + '/public/tmp'));
 app.use("/images/", express.static(__dirname + '/public/images'));
@@ -74,13 +75,31 @@ gameTimer.setInterval(function() {
 var pushTimer = new Nanotimer();
 pushTimer.setInterval(function() {
   for(var i = 0; i < sockets.length; i++) {
-    sockets[i].emit('tick', game.clientState, sockets[i].id);
+    var socket = sockets[i];
+    socket.emit('tick', game.clientState, messageQueues[socket.id], socket.id);
+    messageQueues[socket.id] = [];
   }
-}, this, '16m');
+}, this, '32m');
+
+var messageQueues = {};
+bus.on('log', function(message) {
+  for(var i = 0; i < sockets.length; i++) {
+    var socket = sockets[i];
+    if (!messageQueues[socket.id])
+      messageQueues[socket.id] = [];
+
+    messageQueues[socket.id].push(message);
+  }
+});
 
 sio.on('connection', function(socket) {
   var user = socket.request.user;
   sockets.push(socket);
+
+  messageQueues[socket.id] = [];
+  for(var i = 0; i < game.gameLog.length; i++) {
+    messageQueues[socket.id].push(game.gameLog[i]);
+  }
 
   socket.on('click', function(position) {
     game.playerClick(socket.id, position);

@@ -31,6 +31,8 @@ describe("Game", function() {
     expect(game.time).toBe(2, 'time should have been 2');
     expect(game.state.time).toBe(2, 'state time should have been 2');
     expect(game.states.length).toBe(3, 'should have 3 game states');
+    expect(game.gameLog.length).toBe(1, 'Should have logged game start');
+    expect(game.gameLog[0]).toContain('Game started!', 'Should have logged game start');
   });
   it("should sync old game states", function() {
     var game = new Game();
@@ -69,7 +71,6 @@ describe("Game", function() {
     expect(game.time).toBe(5, 'time should have been 5');
     expect(game.state.time).toBe(5, 'state time should have been 5');
     expect(game.states.length).toBe(6, 'should have 6 game states');
-
     expect(game.clientState.time).toBe(0, 'should be sending clients state 0');
   });
   it("should spawn a bug after one second", function() {
@@ -105,6 +106,8 @@ describe("Game", function() {
     expect(game.state.players.length).toBe(1);
     expect(game.state.players[0].position.x).toBe(100);
     expect(game.state.players[0].position.y).toBe(100);
+    expect(game.gameLog.length).toBe(2, 'Should have logged player spawn');
+    expect(game.gameLog[1]).toContain('123 joined!', 'Should have logged player spawn');
   });
   it("should leave a player where he was when there are no inputs", function() {
     var game = new Game();
@@ -152,6 +155,8 @@ describe("Game", function() {
     expect(game.state.players.length).toBe(1);
     expect(game.state.players[0].position.x).toBe(100, 'Should have spawned player at click point');
     expect(game.state.players[0].position.y).toBe(100, 'Should have spawned player at click point');
+    expect(game.gameLog.length).toBe(2, 'Should have logged player spawn');
+    expect(game.gameLog[1]).toContain('123ABC joined!', 'Should have logged player spawn');
   });
   it("should not add a new player on click when he was already there", function() {
     var game = new Game();
@@ -169,6 +174,8 @@ describe("Game", function() {
     expect(game.state.players.length).toBe(1, 'Should not have added a second player');
     expect(game.state.players[0].position.x).toBe(100, 'Should not have moved player');
     expect(game.state.players[0].position.y).toBe(100, 'Should not have moved player');
+    expect(game.gameLog.length).toBe(2, 'Should have logged player spawn');
+    expect(game.gameLog[1]).toContain('123ABC joined!', 'Should have logged player spawn');
   });
   it("should not add a new player on an updatePlayer tick", function() {
     var game = new Game();
@@ -246,6 +253,8 @@ describe("Game", function() {
       expect(game.state.lasers.length).toBe(0, 'Should have removed the collided laser');
       expect(game.state.bugs.length).toBe(0, 'Should have removed the collided bug');
       expect(game.state.explosions.length).toBe(1, 'Should have added an explosion');
+      expect(game.gameLog.length).toBe(3, 'Should have logged bug kill');
+      expect(game.gameLog[2]).toContain('123ABC killed a bug!', 'Should have logged bug kill');
 
       game.tick();
       expect(game.state.explosions.length).toBe(1, 'Should have kept the explosion');
@@ -287,6 +296,8 @@ describe("Game", function() {
       expect(game.state.players.length).toBe(0, 'Should have removed the collided player');
       expect(game.state.bugs.length).toBe(0, 'Should have removed the collided bug');
       expect(game.state.explosions.length).toBe(1, 'Should have added an explosion');
+      expect(game.gameLog.length).toBe(3, 'Should have logged death by bug');
+      expect(game.gameLog[2]).toContain('123ABC was killed by a bug!', 'Should have logged bug kill');
     }
     finally {
       GameState.spawnBug = oldSpawnBug;
@@ -303,23 +314,5 @@ describe("Game", function() {
     expect(game.state.players.length).toBe(1, 'Should not have removed the collided player');
     expect(game.state.lasers.length).toBe(1, 'Should not have removed the collided laser');
     expect(game.state.explosions.length).toBe(0, 'Should not have added an explosion');
-  });
-  it("should detect collisions between a player and another player's laser", function() {
-    var game = new Game();
-    game.playerClick('123ABC', {x: 100, y: 100});
-    game.updatePlayer({id: '123ABC', inputs: { mouse: {x: 200, y: 200 } }});
-    for(var i = 0; i < 100; i++) {
-      game.tick();
-    }
-    game.playerClick('456ABC', {x: 100, y: 100});
-    game.updatePlayer({id: '456ABC', inputs: { mouse: {x: 200, y: 200, leftDown: true} }});
-    game.tick();
-    game.state.players[1].laserCooldown = 0;
-    for(var i = 0; i < 13; i++) {
-      game.tick();
-    }
-
-    // console.log('\nPLAYERS\n', game.state.players);
-    // console.log('\nLASERS\n', game.state.lasers);
   });
 }); 

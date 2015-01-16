@@ -34,8 +34,14 @@
     inputs.mouse.y = posY;
   });
 
-  io.on('tick', function(gameState, playerId) {
+  io.on('tick', function(gameState, messages, playerId) {
     thisPlayerId = playerId;
+
+    if (messages) {
+      for(var i = 0; i < messages.length; i++) {
+        $('#log').prepend('<div>' + messages[i] + '</div>');
+      }
+    }
 
     if (!latestServerState)
       latestServerState = gameState;
