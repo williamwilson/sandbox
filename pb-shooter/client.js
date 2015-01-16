@@ -52,6 +52,11 @@
     }
   });
 
+  io.on('getName', function() {
+    var name = window.prompt("First, what's your name?", "Joe Fabitz");
+    io.emit('join', name);
+  });
+
   $('svg').click(function(e) {
     var posX = e.pageX - $(this).position().left,
         posY = e.pageY - $(this).position().top;

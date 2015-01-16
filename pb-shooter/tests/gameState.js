@@ -190,12 +190,12 @@ describe("GameState", function() {
   });
   it("should detect collisions between a player and another player's laser", function() {
     var state = new GameState();
-    state.addPlayer({id: '123ABC', position: {x: 200, y: 200 }, laserCooldown: 500});
+    state.addPlayer({id: '123ABC', name: 'Joe Fabitz', position: {x: 200, y: 200 }, laserCooldown: 500});
     state.updatePlayer({id: '123ABC', inputs: { mouse: {x: 200, y: 200 } }});
     for(var i = 0; i < 100; i++) {
       state = state.tick();
     }
-    state.addPlayer({id: '456ABC', position: {x: 100, y: 100}});
+    state.addPlayer({id: '456ABC', name: 'Babyjoel', position: {x: 100, y: 100}});
     state.updatePlayer({id: '456ABC', inputs: { mouse: {x: 200, y: 200, leftDown: true} }});
     state.players[1].laserCooldown = 1;
 
@@ -213,6 +213,6 @@ describe("GameState", function() {
     expect(state.lasers.length).toBe(0, 'Should have removed the laser');
     expect(state.explosions.length).toBe(1, 'Should have created an explosion');
     expect(log.length).toBe(1, 'Should have logged death by laser');
-    expect(log[0]).toContain('456ABC killed 123ABC with a goddamned laser!', 'Should have logged death by laser');
+    expect(log[0]).toContain('Babyjoel killed Joe Fabitz with a goddamned laser!', 'Should have logged death by laser');
   });
 });

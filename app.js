@@ -95,6 +95,7 @@ bus.on('log', function(message) {
 sio.on('connection', function(socket) {
   var user = socket.request.user;
   sockets.push(socket);
+  var playerName;
 
   messageQueues[socket.id] = [];
   for(var i = 0; i < game.gameLog.length; i++) {
@@ -102,7 +103,13 @@ sio.on('connection', function(socket) {
   }
 
   socket.on('click', function(position) {
-    game.playerClick(socket.id, position);
+    if (!playerName)
+      socket.emit('getName');
+  });
+
+  socket.on('join', function(name) {
+    playerName = name;
+    game.playerClick(socket.id, name);
   });
 
   socket.on('inputs', function(data) { 

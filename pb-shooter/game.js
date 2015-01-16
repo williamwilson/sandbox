@@ -49,7 +49,7 @@ var Game = augment(Object, function() {
     player.position = { x: 100, y: 100 };
     player.laserCooldown = 30;
     this.state.addPlayer(player);
-    bus.log(player.id + ' joined!');
+    bus.log(player.name + ' joined!');
   };
   this.updatePlayer = function(player) {
     if (!this.players[player.id])
@@ -58,9 +58,9 @@ var Game = augment(Object, function() {
     this.players[player.id] = player;
     this.state.updatePlayer(player);
   };
-  this.playerClick = function(id, position) {
+  this.playerClick = function(id, name) {
     if (!this.players[id]) {
-      this.addPlayer({id: id, position: position});
+      this.addPlayer({id: id, name: name});
     }
   }
 });

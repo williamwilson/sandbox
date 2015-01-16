@@ -63,6 +63,14 @@ var GameState = augment(Object, function() {
       }
     }
   };
+  this.getPlayerById = function(id) {
+    for(var k = 0; k < this.players.length; k++) {
+      if (this.players[k].id == id) {
+        return this.players[k];
+      }
+    }
+    return undefined;
+  }
   this.checkCollisions = function() {
     for(var i = 0; i < this.lasers.length; i++) {
       var laser = this.lasers[i];
@@ -74,7 +82,8 @@ var GameState = augment(Object, function() {
           this.lasers.splice(i, 1); i--;
           this.bugs.splice(j, 1); j--;
           this.explosions.push(new Explosion(bug.position, bug.vector));
-          bus.log(laser.playerId + ' killed a bug!');
+          
+          bus.log(this.getPlayerById(laser.playerId).name + ' killed a bug!');
         }
       }
     }
@@ -89,7 +98,7 @@ var GameState = augment(Object, function() {
           this.players.splice(i, 1); i--;
           this.bugs.splice(j, 1); j--;
           this.explosions.push(new Explosion(bug.position, bug.vector));
-          bus.log(player.id + ' was killed by a bug!');
+          bus.log(player.name + ' was killed by a bug!');
         }
       }
     }
@@ -107,7 +116,7 @@ var GameState = augment(Object, function() {
             this.players.splice(i, 1); i--;
             this.lasers.splice(j, 1); j--;
             this.explosions.push(new Explosion(player.position, player.vector));
-            bus.log(laser.playerId + ' killed ' + player.id + ' with a goddamned laser!');
+            bus.log(this.getPlayerById(laser.playerId).name + ' killed ' + player.name + ' with a goddamned laser!');
           }
         }
       }
@@ -134,11 +143,13 @@ var GameState = augment(Object, function() {
       var player = this.players[i];
       var inputs = player.inputs;
       var id = player.id;
+      var name = player.name;
       var laserCooldown = player.laserCooldown;
 
       if (!(player instanceof Player)) {
         player = new Player(player.position, player.vector);
         player.id = id;
+        player.name = name;
         player.inputs = inputs;
         player.laserCooldown = laserCooldown;
         this.players[i] = player;
