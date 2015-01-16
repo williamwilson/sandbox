@@ -105,7 +105,7 @@ describe("GameState", function() {
   });
   it("should move a laser towards its target", function() {
     var state = new GameState();
-    state.spawnLaser({x: 100, y: 100}, {x: 200, y:200});
+    state.spawnLaser({x: 100, y: 100}, {x: 200, y:200}, '123ABC');
     state = state.tick();
     expect(state.lasers.length).toBe(1, 'Should have kept laser');
     expect(Math.floor(state.lasers[0].position.x)).toBe(107, 'Should have moved laser towards its target');
@@ -186,5 +186,25 @@ describe("GameState", function() {
     finally {
       GameState.spawnBug = oldSpawnBug;
     }
+  });
+  it("should detect collisions between a player and another player's laser", function() {
+    var state = new GameState();
+    state.addPlayer({id: '123ABC', position: {x: 200, y: 200 }, laserCooldown: 500});
+    state.updatePlayer({id: '123ABC', inputs: { mouse: {x: 200, y: 200 } }});
+    for(var i = 0; i < 100; i++) {
+      state = state.tick();
+    }
+    state.addPlayer({id: '456ABC', position: {x: 100, y: 100}});
+    state.updatePlayer({id: '456ABC', inputs: { mouse: {x: 200, y: 200, leftDown: true} }});
+    state.players[1].laserCooldown = 1;
+
+    for(var i = 0; i < 14; i++) {
+      state = state.tick();
+    }
+
+    expect(state.players.length).toBe(1, 'Should have destroyed player 1');
+    expect(state.players[0].id).toBe('456ABC', 'Should have destroyed player 1');
+    expect(state.lasers.length).toBe(0, 'Should have removed the laser');
+    expect(state.explosions.length).toBe(1, 'Should have created an explosion');
   });
 });

@@ -292,4 +292,34 @@ describe("Game", function() {
       GameState.spawnBug = oldSpawnBug;
     }
   });
+  it("should ignore collisions between a player and his own lasers", function() {
+    var game = new Game();
+    game.playerClick('123ABC', {x: 100, y: 100});
+    game.updatePlayer({id: '123ABC', inputs: { mouse: {x: 100, y: 100, leftDown: true} }});
+    game.tick();
+    game.state.players[0].laserCooldown = 0;
+    game.tick();
+
+    expect(game.state.players.length).toBe(1, 'Should not have removed the collided player');
+    expect(game.state.lasers.length).toBe(1, 'Should not have removed the collided laser');
+    expect(game.state.explosions.length).toBe(0, 'Should not have added an explosion');
+  });
+  it("should detect collisions between a player and another player's laser", function() {
+    var game = new Game();
+    game.playerClick('123ABC', {x: 100, y: 100});
+    game.updatePlayer({id: '123ABC', inputs: { mouse: {x: 200, y: 200 } }});
+    for(var i = 0; i < 100; i++) {
+      game.tick();
+    }
+    game.playerClick('456ABC', {x: 100, y: 100});
+    game.updatePlayer({id: '456ABC', inputs: { mouse: {x: 200, y: 200, leftDown: true} }});
+    game.tick();
+    game.state.players[1].laserCooldown = 0;
+    for(var i = 0; i < 13; i++) {
+      game.tick();
+    }
+
+    // console.log('\nPLAYERS\n', game.state.players);
+    // console.log('\nLASERS\n', game.state.lasers);
+  });
 }); 

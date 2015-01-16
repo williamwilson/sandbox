@@ -17,8 +17,13 @@ describe("Laser", function() {
       new Laser({x: 100, y: 100})
     }).toThrow(new Error("second argument to Laser must be a target with x and y, it was undefined"));
   });
+  it("should fail to spawn a laser without a player id", function() {
+    expect(function() {
+      new Laser({x: 100, y: 100}, {x: 200, y: 200});
+    }).toThrow(new Error("third argument to Laser must be a player id"));
+  });
   it("should move towards its target", function() {
-    var laser = new Laser({x: 100, y: 100}, {x: 200, y: 200});
+    var laser = new Laser({x: 100, y: 100}, {x: 200, y: 200}, '123ABC');
     laser.move();
     expect(Math.floor(laser.position.x)).toBe(107);
     expect(Math.floor(laser.position.y)).toBe(107);

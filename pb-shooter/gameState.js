@@ -90,7 +90,33 @@ var GameState = augment(Object, function() {
         }
       }
     }
+
+    for(var i = 0; i < this.players.length; i++) {
+      var player = this.players[i];
+      for(var j = 0; j < this.lasers.length; j++) {
+        var laser = this.lasers[j];
+
+
+        var collision = this.checkPolygonCollision(player, laser);
+        if (collision.collided) {
+
+          if (player.id != laser.playerId) {
+            this.players.splice(i, 1); i--;
+            this.lasers.splice(j, 1); j--;
+            this.explosions.push(new Explosion(player.position, player.vector));
+          }
+        }
+      }
+    }
   };
+  this.checkPolygonCollision = function(unit1, unit2) {
+    var response = new SAT.Response();
+    var collided = SAT.testPolygonPolygon(unit1.hitBox(), unit2.hitBox(), response);
+    return {
+      collided: collided,
+      response: response
+    };
+  }
   this.checkCollision = function(unit1, unit2) {
     var response = new SAT.Response();
     var collided = SAT.testPolygonCircle(unit1.hitBox(), unit2.hitBox(), response);
@@ -121,7 +147,8 @@ var GameState = augment(Object, function() {
           player.laserCooldown = 30;
           this.spawnLaser(
             {x: player.position.x, y: player.position.y},
-            {x: player.position.x - player.heading.x, y: player.position.y - player.heading.y }
+            {x: player.position.x - player.heading.x, y: player.position.y - player.heading.y },
+            player.id
           );
         }
       }
@@ -131,8 +158,8 @@ var GameState = augment(Object, function() {
       }
     }
   };
-  this.spawnLaser = function(origin, target) {
-    this.lasers.push(new Laser(origin, target));
+  this.spawnLaser = function(origin, target, firingPlayerId) {
+    this.lasers.push(new Laser(origin, target, firingPlayerId));
   };
   this.updateLasers = function() {
     for(var i = 0; i < this.lasers.length; i++) {
