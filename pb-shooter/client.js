@@ -169,6 +169,7 @@
     'thekidd': {},
     'tinabrandon': {},
     'youngtom': {},
+    'roofgoose': {}
   };
 
   function updatePlayers(players) {
